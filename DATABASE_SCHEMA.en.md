@@ -1,6 +1,3 @@
-**Deutsche version (`DATABASE_SCHEMA.ger.md`):**
-
-```markdown
 Here is the Entity-Relationship Diagram (ERD) for the CRM application.
 
 ```mermaid
