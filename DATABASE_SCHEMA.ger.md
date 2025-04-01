@@ -1,5 +1,3 @@
-Hier ist das Entity-Relationship-Diagramm (ERD) für die CRM-Anwendung.
-
 ```mermaid
 erDiagram
     USER ||--o{ ACCOUNT : "besitzt/verwaltet"
