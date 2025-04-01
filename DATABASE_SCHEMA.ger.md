@@ -1,4 +1,7 @@
-Hier ist das Entity-Relationship-Diagramm (ERD) für die CRM-Anwendung.
+**English version (`DATABASE_SCHEMA.en.md`):**
+
+```markdown
+Here is the Entity-Relationship Diagram (ERD) for the CRM application.
 
 ```mermaid
 erDiagram
