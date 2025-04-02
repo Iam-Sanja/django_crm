@@ -25,14 +25,26 @@ def dashboard(request):
     user = request.user
     today = timezone.now()
     
-    # Leads für Kanban
-    user_leads = Lead.objects.filter(owner=user).exclude(
+    # Leads für Statistiken
+    user_leads = Lead.objects.filter(owner=user)
+    
+    # Offene Leads (ohne LOST und UNQUALIFIED)
+    open_leads = user_leads.exclude(
         status__in=[Lead.LeadStatus.LOST, Lead.LeadStatus.UNQUALIFIED]
     )
+    open_leads_count = open_leads.count()
     
-    # Statistiken
-    open_leads_count = user_leads.count()
+    # Leads nach Status für die Zusammenfassung
+    new_leads_count = user_leads.filter(status=Lead.LeadStatus.NEW).count()
+    contacted_leads_count = user_leads.filter(status=Lead.LeadStatus.CONTACTED).count()
+    qualified_leads_count = user_leads.filter(status=Lead.LeadStatus.QUALIFIED).count()
+    unqualified_leads_count = user_leads.filter(status=Lead.LeadStatus.UNQUALIFIED).count()
+    lost_leads_count = user_leads.filter(status=Lead.LeadStatus.LOST).count()
     
+    # Neueste Leads (für die Liste)
+    latest_leads = user_leads.order_by('-created_at')[:5]
+    
+    # Aktivitäten
     planned_activities_count = Activity.objects.filter(
         Q(assigned_to=user) | 
         Q(account__owner=user) | 
@@ -42,14 +54,6 @@ def dashboard(request):
         status='PLANNED',
         activity_date__gte=today
     ).count()
-    
-    open_opportunities_count = Opportunity.objects.filter(
-        owner=user
-    ).exclude(
-        stage__in=['CLOSED_WON', 'CLOSED_LOST']
-    ).count()
-    
-    accounts_count = Account.objects.filter(owner=user).count()
     
     # Anstehende Aktivitäten (für die nächsten 7 Tage)
     upcoming_activities = Activity.objects.filter(
@@ -63,37 +67,29 @@ def dashboard(request):
         activity_date__lte=today + timedelta(days=7)
     ).order_by('activity_date')[:5]  # Nur die nächsten 5 anzeigen
     
-    # Kanban Board Daten
-    leads_by_status = defaultdict(list)
-    for lead in user_leads:
-        leads_by_status[lead.status].append(lead)
-
-    # Definiere die gewünschte Reihenfolge der Spalten im Kanban Board
-    status_order = [
-        Lead.LeadStatus.NEW,
-        Lead.LeadStatus.CONTACTED,
-        Lead.LeadStatus.QUALIFIED,
-        Lead.LeadStatus.LOST,
-        Lead.LeadStatus.UNQUALIFIED,
-    ]
-
-    # Erstelle eine geordnete Liste von Tupeln (status_display, leads_list, status_key) für das Template
-    kanban_columns = []
-    status_display_map = dict(Lead.LeadStatus.choices)
-
-    for status_key in status_order:
-        display_name = status_display_map.get(status_key, status_key)
-        leads_in_status = leads_by_status[status_key]
-        kanban_columns.append((display_name, leads_in_status, status_key))
-
+    # Opportunities
+    open_opportunities_count = Opportunity.objects.filter(
+        owner=user
+    ).exclude(
+        stage__in=['CLOSED_WON', 'CLOSED_LOST']
+    ).count()
+    
+    # Accounts
+    accounts_count = Account.objects.filter(owner=user).count()
+    
     context = {
-                'welcome_message': f'Willkommen zurück, {user.get_full_name() or user.username}!',
-        'lead_kanban_columns': kanban_columns,
+        'welcome_message': f'Willkommen zurück, {user.get_full_name() or user.username}!',
         'open_leads_count': open_leads_count,
+        'new_leads_count': new_leads_count,
+        'contacted_leads_count': contacted_leads_count,
+        'qualified_leads_count': qualified_leads_count,
+        'unqualified_leads_count': unqualified_leads_count,
+        'lost_leads_count': lost_leads_count,
+        'latest_leads': latest_leads,
         'planned_activities_count': planned_activities_count,
+        'upcoming_activities': upcoming_activities,
         'open_opportunities_count': open_opportunities_count,
         'accounts_count': accounts_count,
-        'upcoming_activities': upcoming_activities,
     }
     return render(request, 'core/dashboard.html', context)
 

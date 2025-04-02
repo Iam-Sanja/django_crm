@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lead-Pipeline - CRM System{% endblock %}
+
+{% block page_title %}
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800">
+            <i class="fas fa-project-diagram mr-3 text-blue-600"></i>Lead-Pipeline
+        </h1>
+        <div class="flex space-x-2">
+            <a href="{% url 'leads:lead_add' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
+                <i class="fas fa-plus mr-1.5"></i> Neuer Lead
+            </a>
+            <a href="{% url 'core:dashboard' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
+                <i class="fas fa-tachometer-alt mr-1.5"></i> Dashboard
+            </a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <!-- Fehlermeldungsbereich für Kanban-Updates -->
+    <div id="kanban-error" class="hidden p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-100" role="alert">
+        <span class="font-medium">Fehler!</span> <span id="kanban-error-message"></span>
+    </div>
+    
+    <!-- Kanban Board Container mit Alpine.js -->
+    <div x-data="kanban()" class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100 p-4">
+        <!-- Horizontal scrollbar Container - Höhe angepasst für mehr Platz -->
+        <div class="flex space-x-4 pb-4 h-[calc(100vh-200px)]"> <!-- Höhe angepasst für mehr vertikalen Platz -->
+            <!-- Iteriere durch die Spalten aus der View -->
+            {% for status_display, leads_in_status, status_key in lead_kanban_columns %}
+            <div class="kanban-column bg-gray-50 rounded-lg border border-gray-200 p-3 w-72 md:w-80 flex-shrink-0 flex flex-col h-full"
+                 @dragover.prevent="handleDragOver($event)"
+                 @dragleave.prevent="handleDragLeave($event)"
+                 @drop.prevent="handleDrop($event, '{{ status_key }}')"
+                 data-status-key="{{ status_key }}">
+                
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-semibold text-gray-700">
+                        <span class="kanban-column-title">{{ status_display }}</span>
+                        <span class="kanban-column-count ml-1 text-gray-500">({{ leads_in_status|length }})</span>
+                    </h4>
+                    <span class="w-2 h-2 rounded-full 
+                        {% if status_key == 'NEW' %} bg-blue-500
+                        {% elif status_key == 'CONTACTED' %} bg-yellow-500
+                        {% elif status_key == 'QUALIFIED' %} bg-green-500
+                        {% elif status_key == 'UNQUALIFIED' %} bg-red-500
+                        {% elif status_key == 'LOST' %} bg-gray-500
+                        {% else %} bg-purple-500 {% endif %}">
+                    </span>
+                </div>
+                
+                <!-- Spalteninhalt - mit Flex-Grow für volle Höhe -->
+                <div id="column-body-{{ status_key }}" class="kanban-column-body space-y-3 overflow-y-auto flex-grow">
+                    <!-- Iteriere durch die Leads in dieser Spalte -->
+                    {% for lead in leads_in_status %}
+                    <div id="lead-card-{{ lead.pk }}"
+                         class="kanban-card bg-white rounded-md shadow p-3 border border-gray-200 hover:shadow-md transition-shadow duration-150"
+                         draggable="true"
+                         @dragstart="handleDragStart($event, {{ lead.pk }}, '{{ status_key }}')"
+                         data-lead-id="{{ lead.pk }}"
+                         data-lead-original-status="{{ status_key }}">
+                        
+                        <div class="flex justify-between items-start mb-2">
+                            <a href="{% url 'leads:lead_detail' lead.pk %}" class="font-medium text-sm text-blue-600 hover:underline">
+                                {{ lead.first_name }} {{ lead.last_name }}
+                            </a>
+                            <span class="text-xs text-gray-500">ID: {{ lead.pk }}</span>
+                        </div>
+                        
+                        {% if lead.company %}
+                        <p class="text-xs text-gray-600 mb-1">
+                            <i class="fas fa-building fa-fw mr-1 text-gray-400"></i>{{ lead.company }}
+                        </p>
+                        {% endif %}
+                        
+                        {% if lead.email %}
+                        <p class="text-xs text-gray-600 mb-1">
+                            <i class="fas fa-envelope fa-fw mr-1 text-gray-400"></i>{{ lead.email }}
+                        </p>
+                        {% endif %}
+                        
+                        {% if lead.phone %}
+                        <p class="text-xs text-gray-600 mb-1">
+                            <i class="fas fa-phone fa-fw mr-1 text-gray-400"></i>{{ lead.phone }}
+                        </p>
+                        {% endif %}
+                        
+                        <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
+                            <span class="text-xs text-gray-500">
+                                <i class="fas fa-calendar-alt fa-fw mr-1"></i>{{ lead.created_at|date:"d.m.Y" }}
+                            </span>
+                            <span class="text-xs text-gray-500 updated-timestamp">
+                                <i class="fas fa-clock fa-fw mr-1"></i>{{ lead.updated_at|date:"d.m.Y H:i" }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- "Keine Leads"-Nachricht -->
+                    <div class="kanban-empty-message text-center text-gray-500 text-sm py-4 {% if leads_in_status %}hidden{% endif %}">
+                        Keine Leads in diesem Status.
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function kanban() {
+        return {
+            dragging: false,
+            draggedElementId: null,
+            originalStatus: null,
+
+            getCSRFToken() {
+                return document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+            },
+
+            showError(message) {
+                const errorDiv = document.getElementById('kanban-error');
+                const errorMessageSpan = document.getElementById('kanban-error-message');
+                errorMessageSpan.textContent = message;
+                errorDiv.classList.remove('hidden');
+                setTimeout(() => {
+                    errorDiv.classList.add('hidden');
+                }, 5000);
+            },
+
+            updateEmptyMessageVisibility(columnBody) {
+                if (!columnBody) return;
+                const emptyMessage = columnBody.querySelector('.kanban-empty-message');
+                const cards = columnBody.querySelectorAll('.kanban-card');
+                if (emptyMessage) {
+                    if (cards.length === 0) {
+                        emptyMessage.classList.remove('hidden');
+                    } else {
+                        emptyMessage.classList.add('hidden');
+                    }
+                }
+            },
+
+            updateColumnCount(columnElement, change) {
+                if (!columnElement) return;
+                const countElement = columnElement.querySelector('.kanban-column-count');
+                if (countElement) {
+                    const currentCount = parseInt(countElement.textContent.replace(/[()]/g, ''));
+                    const newCount = currentCount + change;
+                    countElement.textContent = `(${newCount})`;
+                }
+            },
+
+            handleDragStart(event, leadId, leadStatus) {
+                this.dragging = true;
+                this.draggedElementId = `lead-card-${leadId}`;
+                this.originalStatus = leadStatus || event.target.dataset.leadOriginalStatus;
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', leadId);
+                
+                this.$nextTick(() => {
+                    event.target.classList.add('opacity-50', 'shadow-lg', 'border-blue-300');
+                });
+                console.log(`Dragging started: Lead ${leadId}, Status: ${this.originalStatus}`);
+            },
+
+            handleDragOver(event) {
+                event.preventDefault();
+                event.currentTarget.classList.add('bg-gray-100', 'border-blue-300');
+                event.dataTransfer.dropEffect = 'move';
+                return false;
+            },
+
+            handleDragLeave(event) {
+                event.currentTarget.classList.remove('bg-gray-100', 'border-blue-300');
+            },
+
+            handleDrop(event, newStatusKey) {
+                event.preventDefault();
+                this.dragging = false;
+                const targetColumnElement = event.currentTarget;
+                targetColumnElement.classList.remove('bg-gray-100', 'border-blue-300');
+
+                const leadId = event.dataTransfer.getData('text/plain');
+                const draggedElement = document.getElementById(this.draggedElementId);
+
+                if (!draggedElement) {
+                    console.error("Dragged element not found!");
+                    this.showError("Interner Fehler: Gezogenes Element nicht gefunden.");
+                    this.resetDragState();
+                    return;
+                }
+
+                draggedElement.classList.remove('opacity-50', 'shadow-lg', 'border-blue-300');
+
+                const originalStatus = this.originalStatus || draggedElement.dataset.leadOriginalStatus;
+
+                console.log(`Dropped Lead ${leadId} into Status ${newStatusKey}. Original status was ${originalStatus}`);
+
+                if (newStatusKey !== originalStatus) {
+                    const targetColumnBody = targetColumnElement.querySelector('.kanban-column-body');
+                    const sourceColumnElement = document.querySelector(`.kanban-column[data-status-key="${originalStatus}"]`);
+                    const sourceColumnBody = sourceColumnElement ? sourceColumnElement.querySelector('.kanban-column-body') : null;
+
+                    if (!targetColumnBody) {
+                        console.error("Target column body not found!");
+                        this.showError("Interner Fehler: Zielspalte nicht gefunden.");
+                        this.resetDragState();
+                        return;
+                    }
+
+                    // API Call
+                    const apiUrl = `/leads/api/leads/${leadId}/update_status/`;
+                    fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCSRFToken()
+                        },
+                        body: JSON.stringify({ status: newStatusKey })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw new Error(err.error || `HTTP error! Status: ${response.status}`) });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            console.log('API Update successful:', data);
+
+                            // Visuelles Update
+                            targetColumnBody.appendChild(draggedElement);
+                            draggedElement.dataset.leadOriginalStatus = newStatusKey;
+
+                            // Zeitstempel aktualisieren
+                            const timestampElement = draggedElement.querySelector('.updated-timestamp');
+                            if(timestampElement && data.updated_at) {
+                                timestampElement.innerHTML = `<i class="fas fa-clock fa-fw mr-1"></i>${data.updated_at}`;
+                            }
+
+                            // Leere Nachrichten aktualisieren
+                            this.updateEmptyMessageVisibility(targetColumnBody);
+                            if (sourceColumnBody) {
+                                this.updateEmptyMessageVisibility(sourceColumnBody);
+                            }
+
+                            // Spaltenzähler aktualisieren
+                            this.updateColumnCount(targetColumnElement, 1);
+                            if (sourceColumnElement) {
+                                this.updateColumnCount(sourceColumnElement, -1);
+                            }
+
+                            // Kurze Animation für Feedback
+                            draggedElement.classList.add('bg-green-50');
+                            setTimeout(() => {
+                                draggedElement.classList.remove('bg-green-50');
+                            }, 1000);
+
+                        } else {
+                            console.error('API Update failed:', data.error);
+                            this.showError(`Fehler beim Aktualisieren: ${data.error}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                        this.showError(`Netzwerkfehler oder Serverproblem: ${error.message}`);
+                    })
+                    .finally(() => {
+                        this.resetDragState();
+                    });
+
+                } else {
+                    console.log("Dropped in the same column, no change needed.");
+                    this.resetDragState();
+                }
+            },
+
+            resetDragState() {
+                if (this.draggedElementId) {
+                    const el = document.getElementById(this.draggedElementId);
+                    if(el) el.classList.remove('opacity-50', 'shadow-lg', 'border-blue-300');
+                }
+                this.dragging = false;
+                this.draggedElementId = null;
+                this.originalStatus = null;
+            }
+        }
+    }
+</script>
+{% endblock %}
+
