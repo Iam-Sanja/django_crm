@@ -4,72 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Mein CRM{% endblock %}</title>
-    {# Hier später CSS-Links einfügen, z.B. mit {% load static %} #}
+
+    {# Tailwind CSS via CDN #}
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script> {# forms plugin für bessere Formular-Styles #}
+
+    {# Alpine.js via CDN (defer stellt sicher, dass es nach dem HTML-Parsing geladen wird) #}
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    {# Font Awesome via CDN (optional) - Wähle die gewünschte Version #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    {# Eigener CSS-Block für kleine Anpassungen oder falls kein Build-Prozess genutzt wird #}
     <style>
-        body { font-family: sans-serif; margin: 20px; }
-        nav ul { list-style: none; padding: 0; }
-        nav li { display: inline-block; margin-right: 15px; }
-        .errorlist { color: red; }
-        .fieldWrapper { margin-bottom: 1em; }
-        .helptext { font-size: 0.8em; color: grey; }
-        table { border-collapse: collapse; width: 100%; margin-top: 1em;}
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .actions a { margin-right: 5px; text-decoration: none; }
+        /* Kleine Anpassungen, falls nötig */
+        [x-cloak] { display: none !important; } /* Verhindert Flackern von Alpine.js Elementen beim Laden */
+        .kanban-column-body { min-height: 150px; } /* Mindesthöhe für leere Spalten */
+        .kanban-card { cursor: grab; } /* Mauszeiger für verschiebbare Karten */
+        .kanban-card:active { cursor: grabbing; } /* Mauszeiger beim Ziehen */
+        .drag-over { border-style: dashed; background-color: #e0e7ff; } /* Visuelles Feedback beim Drüberziehen */
     </style>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-800 font-sans">
 
-    <nav>
-        <ul>
-             {# Annahme: Core-App hat eine Index-URL namens 'index' #}
-            {% if user.is_authenticated %}
-                <li><a href="/">Dashboard (Home)</a></li>
-                <li><a href="{% url 'customers:account_list' %}">Firmen</a></li>
-                <li><a href="{% url 'customers:contact_list' %}">Kontakte</a></li>
-                <li><a href="{% url 'leads:lead_list' %}">Leads</a></li>
-                <li><a href="{% url 'opportunities:opportunity_list' %}">Opportunities</a></li>
-                <li><a href="{% url 'activities:activity_list' %}">Aktivitäten</a></li>
-                <li><a href="{% url 'core:tag_list' %}">Tags verwalten</a></li> {# <-- NEU #}
-                {# Füge hier Links für weitere Apps hinzu #}
+    {# CSRF Token für JS (wird von Alpine.js für API Calls benötigt) #}
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+    <div class="container mx-auto px-4 py-6">
+
+        <nav class="bg-white shadow-md rounded-lg p-4 mb-6">
+            <div class="flex justify-between items-center">
+                <a href="/" class="text-xl font-semibold text-blue-600 hover:text-blue-800">Mein CRM</a>
+                {% if user.is_authenticated %}
+                <ul class="flex space-x-4">
+                     {# Annahme: Core-App hat eine Index-URL namens 'index' oder '/' #}
+                    <li><a href="{% url 'customers:account_list' %}" class="text-gray-600 hover:text-blue-600"><i class="fas fa-building mr-1"></i>Firmen</a></li>
+                    <li><a href="{% url 'customers:contact_list' %}" class="text-gray-600 hover:text-blue-600"><i class="fas fa-users mr-1"></i>Kontakte</a></li>
+                    <li><a href="{% url 'leads:lead_list' %}" class="text-gray-600 hover:text-blue-600"><i class="fas fa-filter mr-1"></i>Leads</a></li>
+                    <li><a href="{% url 'opportunities:opportunity_list' %}" class="text-gray-600 hover:text-blue-600"><i class="fas fa-dollar-sign mr-1"></i>Opportunities</a></li>
+                    <li><a href="{% url 'activities:activity_list' %}" class="text-gray-600 hover:text-blue-600"><i class="fas fa-tasks mr-1"></i>Aktivitäten</a></li>
+                    <li><a href="{% url 'core:tag_list' %}" class="text-gray-600 hover:text-blue-600"><i class="fas fa-tags mr-1"></i>Tags</a></li>
+                    {# Füge hier Links für weitere Apps hinzu #}
+                </ul>
+                {% endif %}
+                 <div>
+                    {% if user.is_authenticated %}
+                        <span class="text-sm text-gray-700 mr-4">Angemeldet als: {{ user.username }}</span>
+                        <form action="{% url 'logout' %}" method="post" class="inline">
+                             {% csrf_token %}
+                             <button type="submit" class="bg-red-500 hover:bg-red-700 text-white text-sm font-bold py-1 px-3 rounded">
+                                 <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                             </button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            <i class="fas fa-sign-in-alt mr-1"></i>Login
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+
+        <main class="bg-white shadow-md rounded-lg p-6 min-h-[60vh]">
+            <h1 class="text-2xl font-semibold text-gray-700 mb-4">{% block page_title %}{% endblock %}</h1>
+
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="p-4 rounded {% if message.tags == 'success' %} bg-green-100 text-green-800 {% elif message.tags == 'error' %} bg-red-100 text-red-800 {% elif message.tags == 'warning' %} bg-yellow-100 text-yellow-800 {% else %} bg-blue-100 text-blue-800 {% endif %}" role="alert">
+                           <i class="{% if message.tags == 'success' %}fas fa-check-circle{% elif message.tags == 'error' %}fas fa-exclamation-circle{% elif message.tags == 'warning' %}fas fa-exclamation-triangle{% else %}fas fa-info-circle{% endif %} mr-2"></i> {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
             {% endif %}
-        </ul>
-        <hr>
-        <div>
-            {% if user.is_authenticated %}
-                Angemeldet als: {{ user.username }}
-                <form action="{% url 'logout' %}" method="post" style="display: inline; margin-left: 15px;">
-                     {% csrf_token %}
-                     <button type="submit">Logout</button>
-                </form>
-            {% else %}
-                <a href="{% url 'login' %}">Login</a>
-            {% endif %}
-        </div>
-        <hr>
-    </nav>
 
-    <main>
-        <h1>{% block page_title %}{% endblock %}</h1>
+            {% block content %}
+            {% endblock %}
+        </main>
 
-        {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                {% endfor %}
-            </ul>
-            <hr>
-        {% endif %}
+        <footer class="text-center text-gray-500 text-sm mt-8">
+            <p>© {% now "Y" %} Dein CRM Projekt</p>
+        </footer>
 
-        {% block content %}
-        {% endblock %}
-    </main>
+    </div> {# Ende container #}
 
-    <footer>
-        <hr>
-        <p>© {% now "Y" %} Dein CRM Projekt</p>
-    </footer>
+    {# Block für spezifisches Javascript am Ende der Seite #}
+    {% block extra_js %}{% endblock %}
 
-    {# Hier später JS-Links einfügen #}
 </body>
 </html>

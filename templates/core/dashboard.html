@@ -1,31 +1,276 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %} {# Passe den Pfad zu deiner base.html an #}
+{% load static %}
 
 {% block title %}Dashboard - Mein CRM{% endblock %}
 
 {% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
-    <h2>{{ welcome_message }}</h2>
+    <h2 class="text-xl font-semibold text-gray-600 mb-4">{{ welcome_message }}</h2>
 
-    <p>Dies ist Ihr persönliches Dashboard. Hier sehen Sie bald eine Übersicht Ihrer wichtigsten Informationen.</p>
-
-    {# Beispiele für spätere Inhalte: #}
-    <div style="display: flex; gap: 20px; margin-top: 20px;">
-        <div style="border: 1px solid #ccc; padding: 15px; flex: 1;">
-            <h3>Meine offenen Leads</h3>
-            <p>(Hier könnten die Top 5 offenen Leads stehen)</p>
-            <p><a href="{% url 'leads:lead_list' %}">Alle Leads anzeigen</a></p>
-        </div>
-        <div style="border: 1px solid #ccc; padding: 15px; flex: 1;">
-            <h3>Nächste Aktivitäten</h3>
-            <p>(Hier könnten die nächsten 5 fälligen Aktivitäten stehen)</p>
-            <p><a href="{% url 'activities:activity_list' %}">Alle Aktivitäten anzeigen</a></p>
-        </div>
-        <div style="border: 1px solid #ccc; padding: 15px; flex: 1;">
-            <h3>Aktuelle Opportunities</h3>
-            <p>(Hier könnten die Top 5 Opportunities stehen)</p>
-            <p><a href="{% url 'opportunities:opportunity_list' %}">Alle Opportunities anzeigen</a></p>
-        </div>
+    {# Fehlermeldungsbereich für Kanban-Updates #}
+    <div id="kanban-error" class="hidden p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-100" role="alert">
+      <span class="font-medium">Fehler!</span> <span id="kanban-error-message"></span>
     </div>
 
+    {# NEU: Äußerer Container für das "Board"-Feeling #}
+    <div class="bg-white shadow-xl rounded-lg p-4 md:p-6">
+        <h3 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">Meine offenen Leads</h3>
+
+        {# Kanban Board Container mit Alpine.js Logik #}
+        <div x-data="kanban()" class="mb-8">
+            {# Horizontal scrollbar Container #}
+            <div class="flex overflow-x-auto space-x-4 pb-4 -mx-4 px-4"> {# Negative margin + padding trick for scrollbar alignment #}
+
+                {# Iteriere durch die Spalten aus der View #}
+                {% for status_display, leads_in_status, status_key in lead_kanban_columns %}
+                <div class="kanban-column bg-gray-100 rounded-lg shadow p-3 w-72 md:w-80 flex-shrink-0 border-r border-gray-300 last:border-r-0" {# NEU: border-r, last:border-r-0 #}
+                     @dragover.prevent="handleDragOver($event)"
+                     @dragleave.prevent="handleDragLeave($event)"
+                     @drop.prevent="handleDrop($event, '{{ status_key }}')"
+                     data-status-key="{{ status_key }}"
+                     >
+                    <h4 class="font-semibold text-gray-700 mb-3 px-1">{{ status_display }} ({{ leads_in_status|length }})</h4>
+                    {# NEU: ID für leichtere Selektion des Body #}
+                    <div id="column-body-{{ status_key }}" class="kanban-column-body space-y-3">
+                        {# Iteriere durch die Leads in dieser Spalte #}
+                        {% for lead in leads_in_status %}
+                        <div id="lead-card-{{ lead.pk }}"
+                             class="kanban-card bg-white rounded-md shadow p-3 border border-gray-200 hover:shadow-md transition-shadow duration-150" {# Hover-Effekt hinzugefügt #}
+                             draggable="true"
+                             @dragstart="handleDragStart($event, {{ lead.pk }}, '{{ status_key }}')" {# WICHTIG: Originalstatus hier übergeben #}
+                             data-lead-id="{{ lead.pk }}"
+                             data-lead-original-status="{{ status_key }}" {# Speichern des Originalstatus direkt am Element #}
+                             >
+                            <p class="font-medium text-sm text-blue-600 hover:underline">
+                                <a href="{% url 'leads:lead_detail' lead.pk %}">{{ lead.title|default:"Kein Titel" }}</a>
+                            </p>
+                            {% if lead.account %}
+                            <p class="text-xs text-gray-600 mt-1"><i class="fas fa-building fa-fw mr-1 text-gray-400"></i>{{ lead.account.name }}</p>
+                            {% endif %}
+                             {% if lead.contact %}
+                            <p class="text-xs text-gray-600 mt-1"><i class="fas fa-user fa-fw mr-1 text-gray-400"></i>{{ lead.contact.get_full_name }}</p>
+                            {% endif %}
+                            <p class="text-xs text-gray-500 mt-2 text-right">ID: {{ lead.pk }}</p>
+                            <p class="text-xs text-gray-400 mt-1 text-right updated-timestamp">
+                                Aktual.: {{ lead.updated_at|date:"d.m.Y H:i" }}
+                            </p>
+                        </div>
+                        {% endfor %} {# Ende Lead-Loop #}
+
+                        {# NEU: "Keine Leads"-Nachricht mit spezifischer Klasse und initial versteckt, falls Leads da sind #}
+                        <div class="kanban-empty-message text-center text-gray-500 text-sm py-4 {% if leads_in_status %}hidden{% endif %}">
+                            Keine Leads in diesem Status.
+                        </div>
+
+                    </div> {# Ende kanban-column-body #}
+                </div> {# Ende kanban-column #}
+                {% endfor %} {# Ende Spalten-Loop #}
+
+            </div> {# Ende flex container #}
+        </div> {# Ende x-data container #}
+    </div> {# Ende äußerer "Board"-Container #}
+
+    {# --- Restlicher Dashboard-Inhalt (Links etc.) --- #}
+    <hr class="my-6 border-t border-gray-300">
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+         {# Deine Link-Boxen bleiben hier unverändert #}
+        <div class="bg-white p-4 rounded shadow">
+            <h3 class="font-semibold mb-2"><i class="fas fa-filter mr-1 text-blue-500"></i>Leads</h3>
+            <p class="text-sm text-gray-600 mb-3">Alle offenen und geschlossenen Leads anzeigen.</p>
+            <a href="{% url 'leads:lead_list' %}" class="text-blue-600 hover:text-blue-800 hover:underline text-sm">Alle Leads anzeigen <i class="fas fa-arrow-right ml-1"></i></a>
+        </div>
+        <div class="bg-white p-4 rounded shadow">
+            <h3 class="font-semibold mb-2"><i class="fas fa-tasks mr-1 text-green-500"></i>Aktivitäten</h3>
+            <p class="text-sm text-gray-600 mb-3">Anstehende und vergangene Aktivitäten.</p>
+            <a href="{% url 'activities:activity_list' %}" class="text-blue-600 hover:text-blue-800 hover:underline text-sm">Alle Aktivitäten anzeigen <i class="fas fa-arrow-right ml-1"></i></a>
+        </div>
+        <div class="bg-white p-4 rounded shadow">
+            <h3 class="font-semibold mb-2"><i class="fas fa-dollar-sign mr-1 text-yellow-500"></i>Opportunities</h3>
+             <p class="text-sm text-gray-600 mb-3">Alle aktuellen Verkaufschancen verfolgen.</p>
+            <a href="{% url 'opportunities:opportunity_list' %}" class="text-blue-600 hover:text-blue-800 hover:underline text-sm">Alle Opportunities anzeigen <i class="fas fa-arrow-right ml-1"></i></a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function kanban() {
+        return {
+            dragging: false,
+            draggedElementId: null,
+            originalStatus: null,
+
+            getCSRFToken() {
+                return document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+            },
+
+            showError(message) {
+                const errorDiv = document.getElementById('kanban-error');
+                const errorMessageSpan = document.getElementById('kanban-error-message');
+                errorMessageSpan.textContent = message;
+                errorDiv.classList.remove('hidden');
+                setTimeout(() => {
+                    errorDiv.classList.add('hidden');
+                }, 5000);
+            },
+
+            // --- NEU: Funktion zum Updaten der "Keine Leads..." Nachricht ---
+            updateEmptyMessageVisibility(columnBody) {
+                if (!columnBody) return; // Sicherstellen, dass das Body-Element existiert
+                const emptyMessage = columnBody.querySelector('.kanban-empty-message');
+                const cards = columnBody.querySelectorAll('.kanban-card');
+                if (emptyMessage) {
+                    if (cards.length === 0) {
+                        emptyMessage.classList.remove('hidden'); // Anzeigen, wenn keine Karten da sind
+                    } else {
+                        emptyMessage.classList.add('hidden'); // Verstecken, wenn Karten da sind
+                    }
+                }
+            },
+
+            handleDragStart(event, leadId, leadStatus) {
+                this.dragging = true;
+                this.draggedElementId = `lead-card-${leadId}`;
+                // NEU: Originalstatus vom Event-Handler holen (war korrekt), oder vom data-Attribut als Fallback
+                this.originalStatus = leadStatus || event.target.dataset.leadOriginalStatus;
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', leadId);
+                // Styling für das gezogene Element
+                this.$nextTick(() => { // Sicherstellen, dass das DOM aktualisiert ist, bevor Klasse hinzugefügt wird
+                     event.target.classList.add('opacity-50', 'shadow-lg');
+                });
+                console.log(`Dragging started: Lead ${leadId}, Status: ${this.originalStatus}`);
+            },
+
+            handleDragOver(event) {
+                event.preventDefault();
+                event.currentTarget.classList.add('drag-over');
+                event.dataTransfer.dropEffect = 'move';
+                return false;
+            },
+
+            handleDragLeave(event) {
+                event.currentTarget.classList.remove('drag-over');
+            },
+
+            handleDrop(event, newStatusKey) {
+                event.preventDefault();
+                this.dragging = false;
+                const targetColumnElement = event.currentTarget; // Das .kanban-column Element
+                targetColumnElement.classList.remove('drag-over');
+
+                const leadId = event.dataTransfer.getData('text/plain');
+                const draggedElement = document.getElementById(this.draggedElementId);
+
+                if (!draggedElement) {
+                    console.error("Dragged element not found!");
+                    this.showError("Interner Fehler: Gezogenes Element nicht gefunden.");
+                    this.resetDragState(); // Zustand zurücksetzen
+                    return;
+                }
+
+                // Styling zurücksetzen
+                draggedElement.classList.remove('opacity-50', 'shadow-lg');
+
+                // WICHTIG: Originalstatus zuverlässig vom Alpine-State oder data-Attribut holen
+                const originalStatus = this.originalStatus || draggedElement.dataset.leadOriginalStatus;
+
+                console.log(`Dropped Lead ${leadId} into Status ${newStatusKey}. Original status was ${originalStatus}`);
+
+                // Nur API-Aufruf und DOM-Änderung, wenn sich der Status tatsächlich ändert
+                if (newStatusKey !== originalStatus) {
+                    // Elemente finden: Zielspalte Body, Quellspalte Body
+                    const targetColumnBody = targetColumnElement.querySelector('.kanban-column-body');
+                    // NEU: Quellspalte finden über den originalStatus
+                    const sourceColumnElement = document.querySelector(`.kanban-column[data-status-key="${originalStatus}"]`);
+                    const sourceColumnBody = sourceColumnElement ? sourceColumnElement.querySelector('.kanban-column-body') : null;
+
+                    if (!targetColumnBody) {
+                        console.error("Target column body not found!");
+                        this.showError("Interner Fehler: Zielspalte nicht gefunden.");
+                        this.resetDragState();
+                        return;
+                    }
+
+                    // --- API Call ---
+                    const apiUrl = `/leads/api/leads/${leadId}/update_status/`; // Passe dies an deine URL-Struktur an!
+                    fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCSRFToken()
+                        },
+                        body: JSON.stringify({ status: newStatusKey })
+                    })
+                    .then(response => {
+                         if (!response.ok) {
+                             return response.json().then(err => { throw new Error(err.error || `HTTP error! Status: ${response.status}`) });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            console.log('API Update successful:', data);
+
+                            // -------- VISUELLES UPDATE --------
+                            // 1. Element in neue Spalte verschieben
+                            targetColumnBody.appendChild(draggedElement);
+
+                            // 2. Originalstatus am Element aktualisieren
+                            draggedElement.dataset.leadOriginalStatus = newStatusKey;
+
+                            // 3. Zeitstempel aktualisieren (optional)
+                            const timestampElement = draggedElement.querySelector('.updated-timestamp');
+                            if(timestampElement && data.updated_at) {
+                                timestampElement.textContent = `Aktual.: ${data.updated_at}`;
+                            }
+
+                            // 4. Sichtbarkeit der "Keine Leads..." Nachrichten aktualisieren
+                            this.updateEmptyMessageVisibility(targetColumnBody); // Zielspalte prüfen
+                            if (sourceColumnBody) {
+                                this.updateEmptyMessageVisibility(sourceColumnBody); // Quellspalte prüfen
+                            }
+                            // ------------------------------------
+
+                            // Spaltenzähler aktualisieren (komplexer, hier übersprungen, aber möglich)
+
+                        } else {
+                            console.error('API Update failed:', data.error);
+                            this.showError(`Fehler beim Aktualisieren: ${data.error}`);
+                            // Karte NICHT verschieben, bleibt in der alten Spalte
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                        this.showError(`Netzwerkfehler oder Serverproblem: ${error.message}`);
+                        // Karte NICHT verschieben
+                    })
+                    .finally(() => {
+                        // Zustand auf jeden Fall zurücksetzen
+                         this.resetDragState();
+                    });
+
+                } else {
+                    console.log("Dropped in the same column, no change needed.");
+                     // Zustand zurücksetzen, da Drag beendet
+                     this.resetDragState();
+                }
+            },
+
+            // NEU: Funktion zum Zurücksetzen des Drag-States
+            resetDragState() {
+                // Reset state nach dem Drop oder Fehler
+                if (this.draggedElementId) {
+                    const el = document.getElementById(this.draggedElementId);
+                    if(el) el.classList.remove('opacity-50', 'shadow-lg'); // Styling sicher entfernen
+                }
+                this.dragging = false;
+                this.draggedElementId = null;
+                this.originalStatus = null;
+            }
+        }
+    }
+</script>
 {% endblock %}

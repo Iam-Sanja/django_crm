@@ -10,4 +10,6 @@ urlpatterns = [
     path('<int:pk>/', views.LeadDetailView.as_view(), name='lead_detail'),
     path('<int:pk>/edit/', views.LeadUpdateView.as_view(), name='lead_edit'),
     path('<int:pk>/delete/', views.LeadDeleteView.as_view(), name='lead_delete'),
+
+    path('api/leads/<int:pk>/update_status/', views.update_lead_status_api, name='api_lead_update_status'),
 ]

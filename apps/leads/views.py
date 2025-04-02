@@ -3,9 +3,14 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
+import json
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
 
 from .models import Lead
-from .forms import LeadForm # Annahme: Form existiert
+from .forms import LeadForm
 
 class LeadListView(LoginRequiredMixin, ListView):
     model = Lead
@@ -64,3 +69,39 @@ class LeadDeleteView(LoginRequiredMixin, DeleteView):
         if obj.owner != self.request.user:
             raise Http404("Lead not found or permission denied")
         return obj
+    
+
+@require_POST # Nur POST-Requests erlauben
+@login_required # Sicherstellen, dass der User angemeldet ist
+def update_lead_status_api(request, pk):
+    try:
+        # Stelle sicher, dass der Lead existiert und dem User gehört (Sicherheitsaspekt!)
+        lead = get_object_or_404(Lead, pk=pk, owner=request.user)
+
+        data = json.loads(request.body)
+        new_status = data.get('status')
+
+        # Validierung: Ist der neue Status gültig?
+        valid_statuses = [choice[0] for choice in Lead.LeadStatus.choices]
+        if new_status not in valid_statuses:
+            return JsonResponse({'success': False, 'error': 'Ungültiger Status'}, status=400)
+
+        # Status aktualisieren und speichern
+        lead.status = new_status
+        lead.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Lead-Status aktualisiert.',
+            'new_status': lead.get_status_display(), # Optional: neuen Display-Namen zurückgeben
+            'updated_at': lead.updated_at.strftime('%d.%m.%Y %H:%M') # Optional
+         })
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Ungültige JSON-Daten'}, status=400)
+    except Lead.DoesNotExist:
+         return JsonResponse({'success': False, 'error': 'Lead nicht gefunden oder keine Berechtigung'}, status=404)
+    except Exception as e:
+        # Logging des Fehlers wäre hier gut
+        print(f"Error updating lead status: {e}")
+        return JsonResponse({'success': False, 'error': 'Ein interner Fehler ist aufgetreten.'}, status=500)
