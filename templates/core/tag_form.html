@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Tag bearbeiten{% else %}Neues Tag hinzufügen{% endif %} - Mein CRM{% endblock %}
+
+{% block page_title %}{% if object %}Tag bearbeiten: {{ object.name }}{% else %}Neues Tag hinzufügen{% endif %}{% endblock %}
+
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Speichern</button>
+        <a href="{% url 'core:tag_list' %}">Abbrechen</a>
+    </form>
+{% endblock %}

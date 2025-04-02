@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Löschen bestätigen - Mein CRM{% endblock %}
+
+{% block page_title %}Löschen bestätigen{% endblock %}
+
+{% block content %}
+    <p>Sind Sie sicher, dass Sie das Tag "{{ object.name }}" löschen möchten?</p>
+    <p>Das Tag wird von allen verknüpften Objekten (Firmen, Kontakten etc.) entfernt.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Ja, löschen</button>
+        <a href="{% url 'core:tag_list' %}">Nein, abbrechen</a>
+    </form>
+{% endblock %}

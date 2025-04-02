@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Mein CRM{% endblock %}
+
+{% block page_title %}Login{% endblock %}
+
+{% block content %}
+    {% if form.errors %}
+        <p style="color: red;">Benutzername oder Passwort ungültig. Bitte versuchen Sie es erneut.</p>
+    {% endif %}
+
+    {% if next %}
+        {% if user.is_authenticated %}
+        <p>Ihr Account hat keinen Zugriff auf diese Seite. Um fortzufahren,
+        loggen Sie sich bitte mit einem Account ein, der Zugriff hat.</p>
+        {% else %}
+        <p>Bitte loggen Sie sich ein, um diese Seite zu sehen.</p>
+        {% endif %}
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <table> {# Einfache Tabelle für Layout #}
+            <tr>
+                <td>{{ form.username.label_tag }}</td>
+                <td>{{ form.username }}</td>
+            </tr>
+            <tr>
+                <td>{{ form.password.label_tag }}</td>
+                <td>{{ form.password }}</td>
+            </tr>
+        </table>
+        <input type="submit" value="Login" />
+        <input type="hidden" name="next" value="{{ next }}" /> {# Leitet nach Login weiter #}
+    </form>
+
+    {# Optional: Link zur Passwort-Zurücksetzung hinzufügen #}
+    {# <p><a href="{% url 'password_reset' %}">Passwort vergessen?</a></p> #}
+
+{% endblock %}

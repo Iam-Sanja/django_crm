@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Kontaktliste - Mein CRM{% endblock %}
+
+{% block page_title %}Kontaktübersicht{% endblock %}
+
+{% block content %}
+    <p><a href="{% url 'customers:contact_add' %}">Neuen Kontakt hinzufügen</a></p>
+
+    {% if contacts %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Firma</th>
+                    <th>E-Mail</th>
+                    <th>Telefon</th>
+                    <th>Besitzer</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for contact in contacts %}
+                    <tr>
+                        <td><a href="{% url 'customers:contact_detail' pk=contact.pk %}">{{ contact }}</a></td>
+                        <td>{% if contact.account %}<a href="{% url 'customers:account_detail' pk=contact.account.pk %}">{{ contact.account.name }}</a>{% else %}-{% endif %}</td>
+                        <td>{{ contact.email|default:"-" }}</td>
+                        <td>{{ contact.phone_number|default:"-" }}</td>
+                        <td>{{ contact.owner|default:"-" }}</td>
+                        <td class="actions">
+                            <a href="{% url 'customers:contact_detail' pk=contact.pk %}">Details</a>
+                            <a href="{% url 'customers:contact_edit' pk=contact.pk %}">Bearbeiten</a>
+                            <a href="{% url 'customers:contact_delete' pk=contact.pk %}">Löschen</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Keine Kontakte gefunden.</p>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Lead bearbeiten{% else %}Neuen Lead hinzufügen{% endif %} - Mein CRM{% endblock %}
+
+{% block page_title %}{% if object %}Lead bearbeiten: {{ object }}{% else %}Neuen Lead hinzufügen{% endif %}{% endblock %}
+
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Speichern</button>
+        <a href="{% if object %}{% url 'leads:lead_detail' pk=object.pk %}{% else %}{% url 'leads:lead_list' %}{% endif %}">Abbrechen</a>
+    </form>
+{% endblock %}

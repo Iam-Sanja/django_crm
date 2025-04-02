@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Aktivität: {{ activity.subject }} - Mein CRM{% endblock %}
+
+{% block page_title %}Detail: {{ activity.subject }}{% endblock %}
+
+{% block content %}
+    <p>
+        <a href="{% url 'activities:activity_edit' pk=activity.pk %}">Bearbeiten</a> |
+        <a href="{% url 'activities:activity_delete' pk=activity.pk %}">Löschen</a> |
+        <a href="{% url 'activities:activity_list' %}">Zurück zur Liste</a>
+    </p>
+
+    <h3>Aktivitätsdetails</h3>
+    <p><strong>Typ:</strong> {{ activity.get_type_display }}</p>
+    <p><strong>Betreff:</strong> {{ activity.subject }}</p>
+    <p><strong>Datum/Fälligkeit:</strong> {{ activity.activity_date|date:"d.m.Y H:i" }}</p>
+    <p><strong>Status:</strong> {{ activity.get_status_display }}</p>
+    <p><strong>Zugewiesen an:</strong> {{ activity.assigned_to|default:"-" }}</p>
+    <p><strong>Notizen:</strong> {{ activity.notes|linebreaksbr|default:"-" }}</p>
+    <p><strong>Bezug:</strong>
+        {% if activity.account %}<a href="{% url 'customers:account_detail' pk=activity.account.pk %}">Firma: {{ activity.account.name }}</a>
+        {% elif activity.contact %}<a href="{% url 'customers:contact_detail' pk=activity.contact.pk %}">Kontakt: {{ activity.contact }}</a>
+        {% elif activity.opportunity %}<a href="{% url 'opportunities:opportunity_detail' pk=activity.opportunity.pk %}">Opportunity: {{ activity.opportunity.name }}</a>
+        {% elif activity.lead %}<a href="{% url 'leads:lead_detail' pk=activity.lead.pk %}">Lead: {{ activity.lead }}</a>
+        {# elif activity.case ... #}
+        {% else %}Kein direkter Bezug{% endif %}
+    </p>
+    <p><strong>Erstellt am:</strong> {{ activity.created_at }}</p>
+    <p><strong>Aktualisiert am:</strong> {{ activity.updated_at }}</p>
+
+     {# Füge hier später Abschnitte für Notes, Attachments etc. hinzu #}
+
+{% endblock %}

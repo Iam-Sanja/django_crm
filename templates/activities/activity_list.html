@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Aktivitätenliste - Mein CRM{% endblock %}
+
+{% block page_title %}Aktivitätenübersicht{% endblock %}
+
+{% block content %}
+    <p><a href="{% url 'activities:activity_add' %}">Neue Aktivität hinzufügen</a></p>
+
+    {% if activities %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Typ</th>
+                    <th>Betreff</th>
+                    <th>Datum/Fälligkeit</th>
+                    <th>Status</th>
+                    <th>Zugewiesen an</th>
+                    <th>Bezug</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in activities %}
+                    <tr>
+                        <td>{{ activity.get_type_display }}</td>
+                        <td><a href="{% url 'activities:activity_detail' pk=activity.pk %}">{{ activity.subject }}</a></td>
+                        <td>{{ activity.activity_date|date:"d.m.Y H:i" }}</td>
+                        <td>{{ activity.get_status_display }}</td>
+                        <td>{{ activity.assigned_to|default:"-" }}</td>
+                        <td>
+                            {% if activity.account %}<a href="{% url 'customers:account_detail' pk=activity.account.pk %}">Firma: {{ activity.account.name }}</a>
+                            {% elif activity.contact %}<a href="{% url 'customers:contact_detail' pk=activity.contact.pk %}">Kontakt: {{ activity.contact }}</a>
+                            {% elif activity.opportunity %}<a href="{% url 'opportunities:opportunity_detail' pk=activity.opportunity.pk %}">Opp: {{ activity.opportunity.name }}</a>
+                            {% elif activity.lead %}<a href="{% url 'leads:lead_detail' pk=activity.lead.pk %}">Lead: {{ activity.lead }}</a>
+                            {# elif activity.case ... #}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td class="actions">
+                            <a href="{% url 'activities:activity_detail' pk=activity.pk %}">Details</a>
+                            <a href="{% url 'activities:activity_edit' pk=activity.pk %}">Bearbeiten</a>
+                            <a href="{% url 'activities:activity_delete' pk=activity.pk %}">Löschen</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Keine Aktivitäten gefunden.</p>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mein CRM{% endblock %}</title>
+    {# Hier später CSS-Links einfügen, z.B. mit {% load static %} #}
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        nav ul { list-style: none; padding: 0; }
+        nav li { display: inline-block; margin-right: 15px; }
+        .errorlist { color: red; }
+        .fieldWrapper { margin-bottom: 1em; }
+        .helptext { font-size: 0.8em; color: grey; }
+        table { border-collapse: collapse; width: 100%; margin-top: 1em;}
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .actions a { margin-right: 5px; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <ul>
+             {# Annahme: Core-App hat eine Index-URL namens 'index' #}
+            {% if user.is_authenticated %}
+                <li><a href="/">Dashboard (Home)</a></li>
+                <li><a href="{% url 'customers:account_list' %}">Firmen</a></li>
+                <li><a href="{% url 'customers:contact_list' %}">Kontakte</a></li>
+                <li><a href="{% url 'leads:lead_list' %}">Leads</a></li>
+                <li><a href="{% url 'opportunities:opportunity_list' %}">Opportunities</a></li>
+                <li><a href="{% url 'activities:activity_list' %}">Aktivitäten</a></li>
+                <li><a href="{% url 'core:tag_list' %}">Tags verwalten</a></li> {# <-- NEU #}
+                {# Füge hier Links für weitere Apps hinzu #}
+            {% endif %}
+        </ul>
+        <hr>
+        <div>
+            {% if user.is_authenticated %}
+                Angemeldet als: {{ user.username }}
+                <form action="{% url 'logout' %}" method="post" style="display: inline; margin-left: 15px;">
+                     {% csrf_token %}
+                     <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}">Login</a>
+            {% endif %}
+        </div>
+        <hr>
+    </nav>
+
+    <main>
+        <h1>{% block page_title %}{% endblock %}</h1>
+
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            <hr>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <hr>
+        <p>© {% now "Y" %} Dein CRM Projekt</p>
+    </footer>
+
+    {# Hier später JS-Links einfügen #}
+</body>
+</html>

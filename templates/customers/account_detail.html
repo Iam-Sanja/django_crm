@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Firma: {{ account.name }} - Mein CRM{% endblock %}
+
+{% block page_title %}Detail: {{ account.name }}{% endblock %}
+
+{% block content %}
+    <p>
+        <a href="{% url 'customers:account_edit' pk=account.pk %}">Bearbeiten</a> |
+        <a href="{% url 'customers:account_delete' pk=account.pk %}">Löschen</a> |
+        <a href="{% url 'customers:account_list' %}">Zurück zur Liste</a>
+    </p>
+
+    <h3>Firmendetails</h3>
+    <p><strong>Name:</strong> {{ account.name }}</p>
+    <p><strong>Webseite:</strong> {% if account.website %}<a href="{{ account.website }}" target="_blank">{{ account.website }}</a>{% else %}-{% endif %}</p>
+    <p><strong>Telefon:</strong> {{ account.phone_number|default:"-" }}</p>
+    <p><strong>Adresse:</strong> {{ account.address|linebreaksbr|default:"-" }}</p>
+    <p><strong>Branche:</strong> {{ account.industry|default:"-" }}</p>
+    <p><strong>Besitzer:</strong> {{ account.owner|default:"-" }}</p>
+    <p><strong>Zust. Team:</strong> {{ account.assigned_group|default:"-" }}</p>
+    <p><strong>Tags:</strong> {{ account.tags.all|join:", " }}</p>
+    <p><strong>Erstellt am:</strong> {{ account.created_at }}</p>
+    <p><strong>Aktualisiert am:</strong> {{ account.updated_at }}</p>
+
+    <hr>
+    <h3>Zugehörige Kontakte</h3>
+    <p><a href="{% url 'customers:contact_add' %}?account={{ account.pk }}">Neuen Kontakt für diese Firma hinzufügen</a></p>
+    {% if contacts %}
+        <ul>
+            {% for contact in contacts %}
+                <li><a href="{% url 'customers:contact_detail' pk=contact.pk %}">{{ contact }}</a> ({{ contact.job_title|default:"Keine Position" }})</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Keine Kontakte zugeordnet.</p>
+    {% endif %}
+
+    <hr>
+    <h3>Zugehörige Opportunities</h3>
+     {# Annahme: Es gibt eine URL 'opportunities:opportunity_add' #}
+    <p><a href="#">Neue Opportunity für diese Firma hinzufügen</a></p> {# URL anpassen! #}
+    {% if opportunities %}
+         <ul>
+            {% for opportunity in opportunities %}
+                <li><a href="#">{{ opportunity.name }}</a> - {{ opportunity.get_stage_display }} ({{ opportunity.amount }})</li> {# URL anpassen! #}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Keine Opportunities zugeordnet.</p>
+    {% endif %}
+
+     <hr>
+    <h3>Zugehörige Aktivitäten</h3>
+     {# Annahme: Es gibt eine URL 'activities:activity_add' #}
+    <p><a href="#">Neue Aktivität für diese Firma hinzufügen</a></p> {# URL anpassen! #}
+    {% if activities %}
+         <ul>
+            {% for activity in activities %}
+                <li><a href="#">{{ activity.subject }}</a> - {{ activity.get_type_display }} ({{ activity.activity_date|date:"d.m.Y H:i" }})</li> {# URL anpassen! #}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Keine Aktivitäten zugeordnet.</p>
+    {% endif %}
+
+    {# Füge hier später Abschnitte für Notes, Attachments etc. hinzu #}
+
+{% endblock %}

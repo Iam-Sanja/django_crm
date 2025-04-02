@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Opportunity bearbeiten{% else %}Neue Opportunity hinzufügen{% endif %} - Mein CRM{% endblock %}
+
+{% block page_title %}{% if object %}Opportunity bearbeiten: {{ object.name }}{% else %}Neue Opportunity hinzufügen{% endif %}{% endblock %}
+
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Speichern</button>
+        <a href="{% if object %}{% url 'opportunities:opportunity_detail' pk=object.pk %}{% else %}{% url 'opportunities:opportunity_list' %}{% endif %}">Abbrechen</a>
+    </form>
+    {# TODO: Hier könnten später Inline Formsets für OpportunityProduct hinzukommen #}
+{% endblock %}

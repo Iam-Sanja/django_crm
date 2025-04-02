@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Opportunity-Liste - Mein CRM{% endblock %}
+
+{% block page_title %}Opportunity-Übersicht{% endblock %}
+
+{% block content %}
+    <p><a href="{% url 'opportunities:opportunity_add' %}">Neue Opportunity hinzufügen</a></p>
+
+    {% if opportunities %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Firma</th>
+                    <th>Phase</th>
+                    <th>Betrag</th>
+                    <th>Abschlussdatum</th>
+                    <th>Besitzer</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for opportunity in opportunities %}
+                    <tr>
+                        <td><a href="{% url 'opportunities:opportunity_detail' pk=opportunity.pk %}">{{ opportunity.name }}</a></td>
+                        <td><a href="{% url 'customers:account_detail' pk=opportunity.account.pk %}">{{ opportunity.account.name }}</a></td>
+                        <td>{{ opportunity.get_stage_display }}</td>
+                        <td>{{ opportunity.amount }}</td> {# TODO: Währung formatieren #}
+                        <td>{{ opportunity.close_date|date:"d.m.Y" }}</td>
+                        <td>{{ opportunity.owner|default:"-" }}</td>
+                        <td class="actions">
+                            <a href="{% url 'opportunities:opportunity_detail' pk=opportunity.pk %}">Details</a>
+                            <a href="{% url 'opportunities:opportunity_edit' pk=opportunity.pk %}">Bearbeiten</a>
+                            <a href="{% url 'opportunities:opportunity_delete' pk=opportunity.pk %}">Löschen</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Keine Opportunities gefunden.</p>
+    {% endif %}
+{% endblock %}

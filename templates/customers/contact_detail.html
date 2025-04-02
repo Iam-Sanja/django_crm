@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Kontakt: {{ contact }} - Mein CRM{% endblock %}
+
+{% block page_title %}Detail: {{ contact }}{% endblock %}
+
+{% block content %}
+    <p>
+        <a href="{% url 'customers:contact_edit' pk=contact.pk %}">Bearbeiten</a> |
+        <a href="{% url 'customers:contact_delete' pk=contact.pk %}">Löschen</a> |
+        <a href="{% url 'customers:contact_list' %}">Zurück zur Liste</a>
+    </p>
+
+    <h3>Kontaktdetails</h3>
+    <p><strong>Vorname:</strong> {{ contact.first_name }}</p>
+    <p><strong>Nachname:</strong> {{ contact.last_name }}</p>
+    <p><strong>Firma:</strong> {% if contact.account %}<a href="{% url 'customers:account_detail' pk=contact.account.pk %}">{{ contact.account.name }}</a>{% else %}-{% endif %}</p>
+    <p><strong>Position:</strong> {{ contact.job_title|default:"-" }}</p>
+    <p><strong>E-Mail:</strong> {{ contact.email|default:"-" }}</p>
+    <p><strong>Telefon:</strong> {{ contact.phone_number|default:"-" }}</p>
+    <p><strong>Besitzer:</strong> {{ contact.owner|default:"-" }}</p>
+    <p><strong>Zust. Team:</strong> {{ contact.assigned_group|default:"-" }}</p>
+    <p><strong>Tags:</strong> {{ contact.tags.all|join:", " }}</p>
+    <p><strong>Erstellt am:</strong> {{ contact.created_at }}</p>
+    <p><strong>Aktualisiert am:</strong> {{ contact.updated_at }}</p>
+
+    <hr>
+    <h3>Zugehörige Aktivitäten</h3>
+     {# Annahme: Es gibt eine URL 'activities:activity_add' #}
+    <p><a href="#">Neue Aktivität für diesen Kontakt hinzufügen</a></p> {# URL anpassen! #}
+    {% if activities %}
+         <ul>
+            {% for activity in activities %}
+                <li><a href="#">{{ activity.subject }}</a> - {{ activity.get_type_display }} ({{ activity.activity_date|date:"d.m.Y H:i" }})</li> {# URL anpassen! #}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Keine Aktivitäten zugeordnet.</p>
+    {% endif %}
+
+    {# Füge hier später Abschnitte für Notes, Attachments etc. hinzu #}
+
+{% endblock %}

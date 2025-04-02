@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Tag-Liste - Mein CRM{% endblock %}
+
+{% block page_title %}Tag-Verwaltung{% endblock %}
+
+{% block content %}
+    <p><a href="{% url 'core:tag_add' %}">Neues Tag hinzufügen</a></p>
+
+    {% if tags %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Farbe</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tag in tags %}
+                    <tr>
+                        <td>{{ tag.name }}</td>
+                        <td>
+                            {% if tag.color %}
+                            <span style="display: inline-block; width: 20px; height: 20px; background-color: {{ tag.color }}; border: 1px solid #ccc; vertical-align: middle; margin-right: 5px;"></span>
+                            {{ tag.color }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td class="actions">
+                            <a href="{% url 'core:tag_edit' pk=tag.pk %}">Bearbeiten</a>
+                            <a href="{% url 'core:tag_delete' pk=tag.pk %}">Löschen</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Keine Tags gefunden.</p>
+    {% endif %}
+{% endblock %}

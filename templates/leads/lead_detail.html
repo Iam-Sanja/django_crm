@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Lead: {{ lead }} - Mein CRM{% endblock %}
+
+{% block page_title %}Detail: {{ lead }}{% endblock %}
+
+{% block content %}
+    <p>
+        <a href="{% url 'leads:lead_edit' pk=lead.pk %}">Bearbeiten</a> |
+        <a href="{% url 'leads:lead_delete' pk=lead.pk %}">Löschen</a> |
+        <a href="{% url 'leads:lead_list' %}">Zurück zur Liste</a>
+    </p>
+
+    <h3>Lead-Details</h3>
+    <p><strong>Vorname:</strong> {{ lead.first_name|default:"-" }}</p>
+    <p><strong>Nachname:</strong> {{ lead.last_name|default:"-" }}</p>
+    <p><strong>Firma:</strong> {{ lead.company_name|default:"-" }}</p>
+    <p><strong>E-Mail:</strong> {{ lead.email|default:"-" }}</p>
+    <p><strong>Telefon:</strong> {{ lead.phone_number|default:"-" }}</p>
+    <p><strong>Status:</strong> {{ lead.get_status_display }}</p>
+    <p><strong>Quelle:</strong> {{ lead.source|default:"-" }}</p>
+    <p><strong>Besitzer:</strong> {{ lead.owner|default:"-" }}</p>
+    <p><strong>Zust. Team:</strong> {{ lead.assigned_group|default:"-" }}</p>
+    <p><strong>Tags:</strong> {{ lead.tags.all|join:", " }}</p>
+    <p><strong>Erstellt am:</strong> {{ lead.created_at }}</p>
+    <p><strong>Aktualisiert am:</strong> {{ lead.updated_at }}</p>
+    {# <p><strong>Kampagne:</strong> {{ lead.campaign|default:"-" }}</p> #} {# Später hinzufügen #}
+
+    <hr>
+    <h3>Zugehörige Aktivitäten</h3>
+    {# Annahme: Es gibt eine URL 'activities:activity_add' #}
+    <p><a href="#">Neue Aktivität für diesen Lead hinzufügen</a></p> {# URL anpassen! #}
+    {% if activities %}
+         <ul>
+            {% for activity in activities %}
+                <li><a href="#">{{ activity.subject }}</a> - {{ activity.get_type_display }} ({{ activity.activity_date|date:"d.m.Y H:i" }})</li> {# URL anpassen! #}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Keine Aktivitäten zugeordnet.</p>
+    {% endif %}
+
+     {# Füge hier später Abschnitte für Notes, Attachments etc. hinzu #}
+
+{% endblock %}

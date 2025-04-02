@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Löschen bestätigen - Mein CRM{% endblock %}
+
+{% block page_title %}Löschen bestätigen{% endblock %}
+
+{% block content %}
+    <p>Sind Sie sicher, dass Sie die Firma "{{ object }}" löschen möchten?</p>
+    <p>Alle zugehörigen Kontakte, Opportunities etc. könnten ebenfalls beeinflusst oder gelöscht werden (je nach `on_delete`-Einstellung)!</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Ja, löschen</button>
+        <a href="{% url 'customers:account_detail' pk=object.pk %}">Nein, abbrechen</a>
+    </form>
+{% endblock %}

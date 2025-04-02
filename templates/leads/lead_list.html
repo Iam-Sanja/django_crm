@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Lead-Liste - Mein CRM{% endblock %}
+
+{% block page_title %}Lead-Übersicht{% endblock %}
+
+{% block content %}
+    <p><a href="{% url 'leads:lead_add' %}">Neuen Lead hinzufügen</a></p>
+
+    {% if leads %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name / Firma</th>
+                    <th>Status</th>
+                    <th>Quelle</th>
+                    <th>Besitzer</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lead in leads %}
+                    <tr>
+                        <td><a href="{% url 'leads:lead_detail' pk=lead.pk %}">{{ lead }}</a></td>
+                        <td>{{ lead.get_status_display }}</td>
+                        <td>{{ lead.source|default:"-" }}</td>
+                        <td>{{ lead.owner|default:"-" }}</td>
+                        <td class="actions">
+                            <a href="{% url 'leads:lead_detail' pk=lead.pk %}">Details</a>
+                            <a href="{% url 'leads:lead_edit' pk=lead.pk %}">Bearbeiten</a>
+                            <a href="{% url 'leads:lead_delete' pk=lead.pk %}">Löschen</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Keine Leads gefunden.</p>
+    {% endif %}
+{% endblock %}

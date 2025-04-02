@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -59,7 +59,9 @@ ROOT_URLCONF = 'settings.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+
+        'DIRS': [BASE_DIR / 'templates'],
+        # APP_DIRS sucht zusätzlich in apps/app_name/templates/ (nützlich für 3rd-Party-Apps oder Admin)
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -71,6 +73,10 @@ TEMPLATES = [
         },
     },
 ]
+
+LOGIN_REDIRECT_URL = '/'  # Wohin nach erfolgreichem Login? '/' ist oft das Dashboard.
+LOGOUT_REDIRECT_URL = '/' # Wohin nach erfolgreichem Logout? Oft zur Login-Seite oder Startseite.
+LOGIN_URL = '/accounts/login/' # Die URL, zu der @login_required weiterleitet
 
 WSGI_APPLICATION = 'settings.wsgi.application'
 

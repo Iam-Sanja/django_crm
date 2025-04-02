@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Firmenliste - Mein CRM{% endblock %}
+
+{% block page_title %}Firmenübersicht{% endblock %}
+
+{% block content %}
+    <p><a href="{% url 'customers:account_add' %}">Neue Firma hinzufügen</a></p>
+
+    {% if accounts %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Telefon</th>
+                    <th>Besitzer</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in accounts %}
+                    <tr>
+                        <td><a href="{% url 'customers:account_detail' pk=account.pk %}">{{ account.name }}</a></td>
+                        <td>{{ account.phone_number|default:"-" }}</td>
+                        <td>{{ account.owner|default:"-" }}</td>
+                        <td class="actions">
+                            <a href="{% url 'customers:account_detail' pk=account.pk %}">Details</a>
+                            <a href="{% url 'customers:account_edit' pk=account.pk %}">Bearbeiten</a>
+                            <a href="{% url 'customers:account_delete' pk=account.pk %}">Löschen</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Keine Firmen gefunden.</p>
+    {% endif %}
+{% endblock %}

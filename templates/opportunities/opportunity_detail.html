@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Opportunity: {{ opportunity.name }} - Mein CRM{% endblock %}
+
+{% block page_title %}Detail: {{ opportunity.name }}{% endblock %}
+
+{% block content %}
+    <p>
+        <a href="{% url 'opportunities:opportunity_edit' pk=opportunity.pk %}">Bearbeiten</a> |
+        <a href="{% url 'opportunities:opportunity_delete' pk=opportunity.pk %}">Löschen</a> |
+        <a href="{% url 'opportunities:opportunity_list' %}">Zurück zur Liste</a>
+    </p>
+
+    <h3>Opportunity-Details</h3>
+    <p><strong>Name:</strong> {{ opportunity.name }}</p>
+    <p><strong>Firma:</strong> <a href="{% url 'customers:account_detail' pk=opportunity.account.pk %}">{{ opportunity.account.name }}</a></p>
+    <p><strong>Primärer Kontakt:</strong> {% if opportunity.primary_contact %}<a href="{% url 'customers:contact_detail' pk=opportunity.primary_contact.pk %}">{{ opportunity.primary_contact }}</a>{% else %}-{% endif %}</p>
+    <p><strong>Betrag:</strong> {{ opportunity.amount }}</p> {# TODO: Währung formatieren #}
+    <p><strong>Abschlussdatum:</strong> {{ opportunity.close_date|date:"d.m.Y" }}</p>
+    <p><strong>Phase:</strong> {{ opportunity.get_stage_display }}</p>
+    <p><strong>Wahrscheinlichkeit:</strong> {{ opportunity.probability|default:"-" }}%</p>
+    <p><strong>Besitzer:</strong> {{ opportunity.owner|default:"-" }}</p>
+    <p><strong>Zust. Team:</strong> {{ opportunity.assigned_group|default:"-" }}</p>
+    <p><strong>Tags:</strong> {{ opportunity.tags.all|join:", " }}</p>
+    <p><strong>Erstellt am:</strong> {{ opportunity.created_at }}</p>
+    <p><strong>Aktualisiert am:</strong> {{ opportunity.updated_at }}</p>
+    {# <p><strong>Kampagne:</strong> {{ opportunity.campaign|default:"-" }}</p> #} {# Später hinzufügen #}
+
+    <hr>
+    <h3>Produkte</h3>
+    {# TODO: Hier Tabelle oder Liste für OpportunityProduct einfügen #}
+    {# Normalerweise über Inline Formsets im Bearbeiten-Modus verwaltet #}
+    <p><a href="#">Produkte hinzufügen/bearbeiten</a> (Noch nicht implementiert)</p>
+    {# {% for line in product_lines %} ... {% endfor %} #}
+
+    <hr>
+    <h3>Zugehörige Aktivitäten</h3>
+    {# Annahme: Es gibt eine URL 'activities:activity_add' #}
+    <p><a href="#">Neue Aktivität für diese Opportunity hinzufügen</a></p> {# URL anpassen! #}
+    {% if activities %}
+         <ul>
+            {% for activity in activities %}
+                <li><a href="#">{{ activity.subject }}</a> - {{ activity.get_type_display }} ({{ activity.activity_date|date:"d.m.Y H:i" }})</li> {# URL anpassen! #}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Keine Aktivitäten zugeordnet.</p>
+    {% endif %}
+
+    {# Füge hier später Abschnitte für Quotes, Notes, Attachments etc. hinzu #}
+
+{% endblock %}
