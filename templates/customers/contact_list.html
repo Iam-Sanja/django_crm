@@ -1,42 +1,140 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
 
-{% block title %}Kontaktliste - Mein CRM{% endblock %}
+{% block title %}Kontakte - CRM System{% endblock %}
 
-{% block page_title %}Kontaktübersicht{% endblock %}
+{% block page_title %}
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800">
+            <i class="fas fa-user mr-3 text-blue-600"></i>Kontaktübersicht
+        </h1>
+        <a href="{% url 'customers:contact_add' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <i class="fas fa-plus mr-2"></i> Neuen Kontakt
+        </a>
+    </div>
+{% endblock %}
 
 {% block content %}
-    <p><a href="{% url 'customers:contact_add' %}">Neuen Kontakt hinzufügen</a></p>
-
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100">
+        {% if contacts %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Firma</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">E-Mail</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefon</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Besitzer</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for contact in contacts %}
+                            <tr class="hover:bg-gray-50 transition duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <a href="{% url 'customers:contact_detail' pk=contact.pk %}" class="text-blue-600 hover:text-blue-900 font-medium">
+                                        {{ contact.first_name }} {{ contact.last_name }}
+                                    </a>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                    {% if contact.account %}
+                                        <a href="{% url 'customers:account_detail' pk=contact.account.pk %}" class="text-indigo-600 hover:text-indigo-900">
+                                            {{ contact.account.name }}
+                                        </a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                    {{ contact.job_title|default:"-" }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                    {% if contact.email %}
+                                        <a href="mailto:{{ contact.email }}" class="text-gray-700 hover:text-blue-600">
+                                            {{ contact.email }}
+                                        </a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                    {% if contact.phone_number %}
+                                        <a href="tel:{{ contact.phone_number }}" class="text-gray-700 hover:text-blue-600">
+                                            {{ contact.phone_number }}
+                                        </a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-8 w-8">
+                                            <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-200">
+                                                <span class="text-sm font-medium leading-none text-gray-500">
+                                                    {{ contact.owner.username|first|upper }}
+                                                </span>
+                                            </span>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm font-medium text-gray-700">{{ contact.owner|default:"-" }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex justify-end space-x-3">
+                                        <a href="{% url 'customers:contact_detail' pk=contact.pk %}" class="text-gray-500 hover:text-blue-600 transition duration-150" title="Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'customers:contact_edit' pk=contact.pk %}" class="text-gray-500 hover:text-yellow-600 transition duration-150" title="Bearbeiten">
+                                            <i class="fas fa-pencil-alt"></i>
+                                        </a>
+                                        <a href="{% url 'customers:contact_delete' pk=contact.pk %}" class="text-gray-500 hover:text-red-600 transition duration-150" title="Löschen">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="flex flex-col items-center justify-center py-12 bg-gray-50">
+                <div class="text-center">
+                    <i class="fas fa-user text-gray-300 text-5xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-1">Keine Kontakte vorhanden</h3>
+                    <p class="text-gray-500 mb-6">Erstellen Sie Ihren ersten Kontakt, um Ansprechpartner zu verwalten.</p>
+                    <a href="{% url 'customers:contact_add' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-plus mr-2"></i> Neuen Kontakt erstellen
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
     {% if contacts %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Firma</th>
-                    <th>E-Mail</th>
-                    <th>Telefon</th>
-                    <th>Besitzer</th>
-                    <th>Aktionen</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for contact in contacts %}
-                    <tr>
-                        <td><a href="{% url 'customers:contact_detail' pk=contact.pk %}">{{ contact }}</a></td>
-                        <td>{% if contact.account %}<a href="{% url 'customers:account_detail' pk=contact.account.pk %}">{{ contact.account.name }}</a>{% else %}-{% endif %}</td>
-                        <td>{{ contact.email|default:"-" }}</td>
-                        <td>{{ contact.phone_number|default:"-" }}</td>
-                        <td>{{ contact.owner|default:"-" }}</td>
-                        <td class="actions">
-                            <a href="{% url 'customers:contact_detail' pk=contact.pk %}">Details</a>
-                            <a href="{% url 'customers:contact_edit' pk=contact.pk %}">Bearbeiten</a>
-                            <a href="{% url 'customers:contact_delete' pk=contact.pk %}">Löschen</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Keine Kontakte gefunden.</p>
-    {% endif %}
+    <div class="mt-6 flex justify-center">
+        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">Zurück</span>
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            {% endif %}
+            
+            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                Seite {{ page_obj.number }} von {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">Weiter</span>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </nav>
+    </div>
+{% endif %}
 {% endblock %}
+

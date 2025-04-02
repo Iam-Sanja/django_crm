@@ -13,6 +13,7 @@ class ActivityListView(LoginRequiredMixin, ListView):
     model = Activity
     template_name = 'activities/activity_list.html'
     context_object_name = 'activities'
+    paginate_by = 10
 
     def get_queryset(self):
         # Zeige Aktivitäten, die dem User zugewiesen sind ODER

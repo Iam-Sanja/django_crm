@@ -19,6 +19,7 @@ class Lead(models.Model):
     first_name = models.CharField(_("First Name"), max_length=100, blank=True, null=True)
     last_name = models.CharField(_("Last Name"), max_length=100, blank=True, null=True) # Evtl. verpflichtend machen?
     company_name = models.CharField(_("Company"), max_length=255, blank=True, null=True)
+    job_title = models.CharField(_("Job Title"), max_length=100, blank=True, null=True)
     email = models.EmailField(_("Email"), blank=True, null=True)
     phone_number = models.CharField(_("Phone"), max_length=50, blank=True, null=True)
     status = models.CharField(_("Status"), max_length=20, choices=LeadStatus.choices, default=LeadStatus.NEW)
@@ -28,6 +29,7 @@ class Lead(models.Model):
     owner = models.ForeignKey(User, related_name="owned_leads", on_delete=models.SET_NULL, null=True, blank=True)
     assigned_group = models.ForeignKey(Group, related_name="assigned_leads", on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Assigned Team"))
     tags = models.ManyToManyField('core.Tag', blank=True, related_name="leads", verbose_name=_("Tags"))
+    notes = models.TextField(_("Notes"), blank=True, null=True)
     # campaign = models.ForeignKey(Campaign, related_name="leads", on_delete=models.SET_NULL, null=True, blank=True) # Später einkommentieren
 
     class Meta:

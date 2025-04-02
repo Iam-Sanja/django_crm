@@ -1,16 +1,67 @@
 {% extends 'base.html' %}
 
-{% block title %}Löschen bestätigen - Mein CRM{% endblock %}
+{% block title %}Tag löschen - CRM System{% endblock %}
 
-{% block page_title %}Löschen bestätigen{% endblock %}
+{% block page_title %}
+    <div class="mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-trash-alt mr-3 text-red-600"></i>
+            Tag löschen
+        </h1>
+    </div>
+{% endblock %}
 
 {% block content %}
-    <p>Sind Sie sicher, dass Sie das Tag "{{ object.name }}" löschen möchten?</p>
-    <p>Das Tag wird von allen verknüpften Objekten (Firmen, Kontakten etc.) entfernt.</p>
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100">
+        <div class="p-6 md:p-8">
+            <div class="mb-6">
+                <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-red-500"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-700">
+                                Sie sind dabei, das Tag "<strong>{{ object.name }}</strong>" zu löschen. Diese Aktion kann nicht rückgängig gemacht werden.
+                            </p>
+                            <p class="mt-2 text-sm text-red-700">
+                                <i class="fas fa-info-circle mr-1"></i> Das Tag wird von allen verknüpften Objekten (Firmen, Kontakten etc.) entfernt.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit">Ja, löschen</button>
-        <a href="{% url 'core:tag_list' %}">Nein, abbrechen</a>
-    </form>
+            <div class="bg-gray-50 p-4 rounded-md mb-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">Tag-Details:</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                    <li><strong>Name:</strong> {{ object.name }}</li>
+                    <li>
+                        <strong>Farbe:</strong> 
+                        {% if object.color %}
+                            <div class="flex items-center mt-1">
+                                <span class="inline-block w-6 h-6 rounded-full mr-2" style="background-color: {{ object.color }}; border: 1px solid #ddd;"></span>
+                                <span>{{ object.color }}</span>
+                            </div>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="flex justify-end space-x-4">
+                    <a href="{% url 'core:tag_list' %}"
+                       class="inline-flex justify-center items-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150">
+                       <i class="fas fa-arrow-left mr-2"></i> Abbrechen
+                    </a>
+                    <button type="submit" class="inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150">
+                        <i class="fas fa-trash-alt mr-2"></i> Ja, löschen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 {% endblock %}

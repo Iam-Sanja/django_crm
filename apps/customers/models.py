@@ -8,6 +8,7 @@ class Account(models.Model):
     name = models.CharField(_("Company Name"), max_length=255, unique=True)
     website = models.URLField(_("Website"), blank=True, null=True)
     phone_number = models.CharField(_("Phone"), max_length=50, blank=True, null=True)
+    email = models.EmailField(_("Email"), blank=True, null=True)
     address = models.TextField(_("Address"), blank=True, null=True)
     industry = models.CharField(_("Industry"), max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
@@ -30,7 +31,9 @@ class Contact(models.Model):
     last_name = models.CharField(_("Last Name"), max_length=100)
     email = models.EmailField(_("Email"), blank=True, null=True, unique=True) # Unique kann problematisch sein, wenn mehrere ohne E-Mail existieren sollen
     phone_number = models.CharField(_("Phone"), max_length=50, blank=True, null=True)
+    mobile_number = models.CharField(_("Mobile"), max_length=50, blank=True, null=True)
     job_title = models.CharField(_("Job Title"), max_length=100, blank=True, null=True)
+    address = models.TextField(_("Address"), blank=True, null=True)
     created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated At"), auto_now=True)
     account = models.ForeignKey(Account, related_name="contacts", on_delete=models.CASCADE, null=True, blank=True, verbose_name=_("Company")) # CASCADE: Wenn Firma gelöscht, Kontakt auch? Oder SET_NULL?

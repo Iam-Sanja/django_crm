@@ -1,45 +1,277 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
 
-{% block title %}Lead: {{ lead }} - Mein CRM{% endblock %}
+{% block title %}Lead: {{ lead.first_name }} {{ lead.last_name }} - CRM System{% endblock %}
 
-{% block page_title %}Detail: {{ lead }}{% endblock %}
+{% block page_title %}
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-filter mr-3 text-blue-600"></i>
+            {{ lead.first_name }} {{ lead.last_name }}
+        </h1>
+        <div class="flex space-x-2">
+            <a href="{% url 'leads:lead_edit' pk=lead.pk %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
+                <i class="fas fa-pencil-alt mr-1.5"></i> Bearbeiten
+            </a>
+            <a href="{% url 'leads:lead_delete' pk=lead.pk %}" class="bg-red-500 hover:bg-red-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
+                <i class="fas fa-trash-alt mr-1.5"></i> Löschen
+            </a>
+            <a href="{% url 'leads:lead_list' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
+                <i class="fas fa-arrow-left mr-1.5"></i> Zur Liste
+            </a>
+        </div>
+    </div>
+{% endblock %}
 
 {% block content %}
-    <p>
-        <a href="{% url 'leads:lead_edit' pk=lead.pk %}">Bearbeiten</a> |
-        <a href="{% url 'leads:lead_delete' pk=lead.pk %}">Löschen</a> |
-        <a href="{% url 'leads:lead_list' %}">Zurück zur Liste</a>
-    </p>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Hauptinformationen -->
+        <div class="lg:col-span-2">
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100 mb-6">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-lg font-medium text-gray-800">Lead-Details</h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Vorname</p>
+                            <p class="font-medium">{{ lead.first_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Nachname</p>
+                            <p class="font-medium">{{ lead.last_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Unternehmen</p>
+                            <p class="font-medium">{{ lead.company_name|default:"-" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Position</p>
+                            <p class="font-medium">{{ lead.job_title|default:"-" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">E-Mail</p>
+                            <p class="font-medium">
+                                {% if lead.email %}
+                                    <a href="mailto:{{ lead.email }}" class="text-blue-600 hover:text-blue-800">
+                                        {{ lead.email }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Telefon</p>
+                            <p class="font-medium">
+                                {% if lead.phone_number %}
+                                    <a href="tel:{{ lead.phone_number }}" class="text-blue-600 hover:text-blue-800">
+                                        {{ lead.phone_number }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Status</p>
+                            <p class="font-medium">
+                                <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    {% if lead.status == 'NEW' %} bg-blue-100 text-blue-800
+                                    {% elif lead.status == 'CONTACTED' %} bg-yellow-100 text-yellow-800
+                                    {% elif lead.status == 'QUALIFIED' %} bg-green-100 text-green-800
+                                    {% elif lead.status == 'UNQUALIFIED' %} bg-red-100 text-red-800
+                                    {% elif lead.status == 'CONVERTED' %} bg-purple-100 text-purple-800
+                                    {% else %} bg-gray-100 text-gray-800 {% endif %}">
+                                    {{ lead.get_status_display }}
+                                </span>
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Quelle</p>
+                            <p class="font-medium">{{ lead.source|default:"-" }}</p>
+                        </div>
+                    </div>
 
-    <h3>Lead-Details</h3>
-    <p><strong>Vorname:</strong> {{ lead.first_name|default:"-" }}</p>
-    <p><strong>Nachname:</strong> {{ lead.last_name|default:"-" }}</p>
-    <p><strong>Firma:</strong> {{ lead.company_name|default:"-" }}</p>
-    <p><strong>E-Mail:</strong> {{ lead.email|default:"-" }}</p>
-    <p><strong>Telefon:</strong> {{ lead.phone_number|default:"-" }}</p>
-    <p><strong>Status:</strong> {{ lead.get_status_display }}</p>
-    <p><strong>Quelle:</strong> {{ lead.source|default:"-" }}</p>
-    <p><strong>Besitzer:</strong> {{ lead.owner|default:"-" }}</p>
-    <p><strong>Zust. Team:</strong> {{ lead.assigned_group|default:"-" }}</p>
-    <p><strong>Tags:</strong> {{ lead.tags.all|join:", " }}</p>
-    <p><strong>Erstellt am:</strong> {{ lead.created_at }}</p>
-    <p><strong>Aktualisiert am:</strong> {{ lead.updated_at }}</p>
-    {# <p><strong>Kampagne:</strong> {{ lead.campaign|default:"-" }}</p> #} {# Später hinzufügen #}
+                    <div class="mt-6">
+                        <p class="text-sm text-gray-500 mb-1">Notizen</p>
+                        <div class="bg-gray-50 p-4 rounded border border-gray-200 min-h-[100px]">
+                            {{ lead.notes|linebreaksbr|default:"<span class='text-gray-400 italic'>Keine Notizen vorhanden</span>" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <hr>
-    <h3>Zugehörige Aktivitäten</h3>
-    {# Annahme: Es gibt eine URL 'activities:activity_add' #}
-    <p><a href="#">Neue Aktivität für diesen Lead hinzufügen</a></p> {# URL anpassen! #}
-    {% if activities %}
-         <ul>
-            {% for activity in activities %}
-                <li><a href="#">{{ activity.subject }}</a> - {{ activity.get_type_display }} ({{ activity.activity_date|date:"d.m.Y H:i" }})</li> {# URL anpassen! #}
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Keine Aktivitäten zugeordnet.</p>
-    {% endif %}
+            <!-- Aktivitäten -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <h3 class="text-lg font-medium text-gray-800">Aktivitäten</h3>
+                    <a href="{% url 'activities:activity_add' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                        <i class="fas fa-plus mr-1"></i> Neue Aktivität
+                    </a>
+                </div>
+                <div class="p-6">
+                    {% if activities %}
+                        <div class="space-y-4">
+                            {% for activity in activities %}
+                                <div class="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0">
+                                            <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-gray-100">
+                                                {% if activity.type == 'CALL' %}<i class="fas fa-phone-alt text-blue-500"></i>
+                                                {% elif activity.type == 'MEETING' %}<i class="fas fa-users text-purple-500"></i>
+                                                {% elif activity.type == 'TASK' %}<i class="fas fa-tasks text-yellow-500"></i>
+                                                {% elif activity.type == 'EMAIL' %}<i class="fas fa-envelope text-green-500"></i>
+                                                {% else %}<i class="fas fa-calendar-check text-gray-500"></i>{% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="ml-3 flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <a href="{% url 'activities:activity_detail' pk=activity.pk %}" class="text-blue-600 hover:text-blue-800 font-medium">{{ activity.subject }}</a>
+                                                <span class="text-sm text-gray-500">{{ activity.activity_date|date:"d.m.Y H:i" }}</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mt-1">{{ activity.get_type_display }} - {{ activity.get_status_display }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500 italic">Keine Aktivitäten vorhanden. Fügen Sie Aktivitäten hinzu, um Interaktionen zu verfolgen.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
 
-     {# Füge hier später Abschnitte für Notes, Attachments etc. hinzu #}
+        <!-- Seitenleiste -->
+        <div class="lg:col-span-1">
+            <!-- Status-Änderung -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100 mb-6">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-lg font-medium text-gray-800">Status ändern</h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-3">
+                        <button data-status="NEW" class="status-btn w-full py-2 px-4 rounded-md text-sm font-medium text-left flex items-center space-x-2 transition-colors duration-150 {% if lead.status == 'NEW' %}bg-blue-100 text-blue-800 border border-blue-300{% else %}bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200{% endif %}">
+                            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                            <span>Neu</span>
+                        </button>
+                        <button data-status="CONTACTED" class="status-btn w-full py-2 px-4 rounded-md text-sm font-medium text-left flex items-center space-x-2 transition-colors duration-150 {% if lead.status == 'CONTACTED' %}bg-yellow-100 text-yellow-800 border border-yellow-300{% else %}bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200{% endif %}">
+                            <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+                            <span>Kontaktiert</span>
+                        </button>
+                        <button data-status="QUALIFIED" class="status-btn w-full py-2 px-4 rounded-md text-sm font-medium text-left flex items-center space-x-2 transition-colors duration-150 {% if lead.status == 'QUALIFIED' %}bg-green-100 text-green-800 border border-green-300{% else %}bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200{% endif %}">
+                            <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                            <span>Qualifiziert</span>
+                        </button>
+                        <button data-status="UNQUALIFIED" class="status-btn w-full py-2 px-4 rounded-md text-sm font-medium text-left flex items-center space-x-2 transition-colors duration-150 {% if lead.status == 'UNQUALIFIED' %}bg-red-100 text-red-800 border border-red-300{% else %}bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200{% endif %}">
+                            <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                            <span>Nicht qualifiziert</span>
+                        </button>
+                        <button data-status="CONVERTED" class="status-btn w-full py-2 px-4 rounded-md text-sm font-medium text-left flex items-center space-x-2 transition-colors duration-150 {% if lead.status == 'CONVERTED' %}bg-purple-100 text-purple-800 border border-purple-300{% else %}bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200{% endif %}">
+                            <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+                            <span>Konvertiert</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
+            <!-- Schnellaktionen -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100 mb-6">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-lg font-medium text-gray-800">Schnellaktionen</h3>
+                </div>
+                <div class="p-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <a href="{% url 'activities:activity_add' %}" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-150">
+                            <i class="fas fa-phone-alt text-blue-600 text-xl mb-2"></i>
+                            <span class="text-sm text-gray-700">Anruf planen</span>
+                        </a>
+                        <a href="{% url 'activities:activity_add' %}" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-150">
+                            <i class="fas fa-users text-purple-600 text-xl mb-2"></i>
+                            <span class="text-sm text-gray-700">Meeting</span>
+                        </a>
+                        <a href="{% url 'activities:activity_add' %}" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-150">
+                            <i class="fas fa-tasks text-yellow-600 text-xl mb-2"></i>
+                            <span class="text-sm text-gray-700">Aufgabe</span>
+                        </a>
+                        <a href="{% url 'activities:activity_add' %}" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-150">
+                            <i class="fas fa-envelope text-green-600 text-xl mb-2"></i>
+                            <span class="text-sm text-gray-700">E-Mail</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zusätzliche Informationen -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-lg font-medium text-gray-800">Zusätzliche Informationen</h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Erstellt am</p>
+                            <p class="font-medium">{{ lead.created_at|date:"d.m.Y H:i" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Aktualisiert am</p>
+                            <p class="font-medium">{{ lead.updated_at|date:"d.m.Y H:i" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Besitzer</p>
+                            <p class="font-medium flex items-center">
+                                <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 mr-2">
+                                    <span class="text-xs font-medium leading-none text-gray-500">
+                                        {{ lead.owner.username|first|upper }}
+                                    </span>
+                                </span>
+                                {{ lead.owner.username }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript für Status-Änderung -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusButtons = document.querySelectorAll('.status-btn');
+            const leadId = {{ lead.pk }};
+            const csrfToken = '{{ csrf_token }}';
+
+            statusButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const status = this.dataset.status;
+                    
+                    // AJAX-Anfrage zum Aktualisieren des Status
+                    fetch(`/leads/api/leads/${leadId}/update_status/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ status: status })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Erfolgreiche Aktualisierung - Seite neu laden oder UI aktualisieren
+                            location.reload();
+                        } else {
+                            // Fehlerbehandlung
+                            alert('Fehler beim Aktualisieren des Status: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
+                    });
+                });
+            });
+        });
+    </script>
 {% endblock %}
+t

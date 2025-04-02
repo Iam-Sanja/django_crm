@@ -1,42 +1,97 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
 
-{% block title %}Tag-Liste - Mein CRM{% endblock %}
+{% block title %}Tags - CRM System{% endblock %}
 
-{% block page_title %}Tag-Verwaltung{% endblock %}
+{% block page_title %}
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800">
+            <i class="fas fa-tags mr-3 text-blue-600"></i>Tag-Verwaltung
+        </h1>
+        <a href="{% url 'core:tag_add' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <i class="fas fa-plus mr-2"></i> Neues Tag
+        </a>
+    </div>
+{% endblock %}
 
 {% block content %}
-    <p><a href="{% url 'core:tag_add' %}">Neues Tag hinzufügen</a></p>
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100">
+        {% if tags %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farbe</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for tag in tags %}
+                            <tr class="hover:bg-gray-50 transition duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="font-medium text-gray-900">{{ tag.name }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if tag.color %}
+                                        <div class="flex items-center">
+                                            <span class="inline-block w-6 h-6 rounded-full mr-2" style="background-color: {{ tag.color }}; border: 1px solid #ddd;"></span>
+                                            <span class="text-sm text-gray-700">{{ tag.color }}</span>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-gray-400">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex justify-end space-x-3">
+                                        <a href="{% url 'core:tag_edit' pk=tag.pk %}" class="text-gray-500 hover:text-yellow-600 transition duration-150" title="Bearbeiten">
+                                            <i class="fas fa-pencil-alt"></i>
+                                        </a>
+                                        <a href="{% url 'core:tag_delete' pk=tag.pk %}" class="text-gray-500 hover:text-red-600 transition duration-150" title="Löschen">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="flex flex-col items-center justify-center py-12 bg-gray-50">
+                <div class="text-center">
+                    <i class="fas fa-tags text-gray-300 text-5xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-1">Keine Tags vorhanden</h3>
+                    <p class="text-gray-500 mb-6">Erstellen Sie Tags, um Ihre Einträge zu kategorisieren und zu filtern.</p>
+                    <a href="{% url 'core:tag_add' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-plus mr-2"></i> Neues Tag erstellen
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
 
     {% if tags %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Farbe</th>
-                    <th>Aktionen</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for tag in tags %}
-                    <tr>
-                        <td>{{ tag.name }}</td>
-                        <td>
-                            {% if tag.color %}
-                            <span style="display: inline-block; width: 20px; height: 20px; background-color: {{ tag.color }}; border: 1px solid #ccc; vertical-align: middle; margin-right: 5px;"></span>
-                            {{ tag.color }}
-                            {% else %}
-                            -
-                            {% endif %}
-                        </td>
-                        <td class="actions">
-                            <a href="{% url 'core:tag_edit' pk=tag.pk %}">Bearbeiten</a>
-                            <a href="{% url 'core:tag_delete' pk=tag.pk %}">Löschen</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Keine Tags gefunden.</p>
+        <div class="mt-6 flex justify-center">
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Zurück</span>
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                {% endif %}
+                
+                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                    Seite {{ page_obj.number }} von {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Weiter</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
     {% endif %}
 {% endblock %}

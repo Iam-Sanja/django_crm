@@ -2,33 +2,159 @@
 
 {% block title %}Aktivität: {{ activity.subject }} - Mein CRM{% endblock %}
 
-{% block page_title %}Detail: {{ activity.subject }}{% endblock %}
+{% block page_title %}
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-clipboard-list mr-3 text-blue-600"></i>
+            {{ activity.subject }}
+        </h1>
+        <div class="flex space-x-2">
+            <a href="{% url 'activities:activity_edit' pk=activity.pk %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
+                <i class="fas fa-pencil-alt mr-1.5"></i> Bearbeiten
+            </a>
+            <a href="{% url 'activities:activity_delete' pk=activity.pk %}" class="bg-red-500 hover:bg-red-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
+                <i class="fas fa-trash-alt mr-1.5"></i> Löschen
+            </a>
+        </div>
+    </div>
+{% endblock %}
 
 {% block content %}
-    <p>
-        <a href="{% url 'activities:activity_edit' pk=activity.pk %}">Bearbeiten</a> |
-        <a href="{% url 'activities:activity_delete' pk=activity.pk %}">Löschen</a> |
-        <a href="{% url 'activities:activity_list' %}">Zurück zur Liste</a>
-    </p>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Hauptinformationen -->
+        <div class="lg:col-span-2">
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100 mb-6">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-lg font-medium text-gray-800">Aktivitätsdetails</h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1"><i class="fas fa-tag fa-fw mr-1 text-gray-400"></i>Typ</p>
+                            <p class="font-medium">{{ activity.get_type_display }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1"><i class="fas fa-heading fa-fw mr-1 text-gray-400"></i>Betreff</p>
+                            <p class="font-medium">{{ activity.subject }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1"><i class="fas fa-calendar-alt fa-fw mr-1 text-gray-400"></i>Datum/Fälligkeit</p>
+                            <p class="font-medium">{{ activity.activity_date|date:"d.m.Y H:i" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1"><i class="fas fa-check-circle fa-fw mr-1 text-gray-400"></i>Status</p>
+                            <p class="font-medium">
+                                <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    {% if activity.status == 'PLANNED' %} bg-blue-100 text-blue-800
+                                    {% elif activity.status == 'HELD' %} bg-green-100 text-green-800
+                                    {% elif activity.status == 'NOT_HELD' %} bg-red-100 text-red-800
+                                    {% else %} bg-gray-100 text-gray-800 {% endif %}">
+                                    {{ activity.get_status_display }}
+                                </span>
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1"><i class="fas fa-user fa-fw mr-1 text-gray-400"></i>Zugewiesen an</p>
+                            <p class="font-medium flex items-center">
+                                <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 mr-2">
+                                    <span class="text-xs font-medium leading-none text-gray-500">
+                                        {{ activity.assigned_to.username|first|upper }}
+                                    </span>
+                                </span>
+                                {{ activity.assigned_to.username|default:"-" }}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1"><i class="fas fa-link fa-fw mr-1 text-gray-400"></i>Bezug</p>
+                            <p class="font-medium">
+                                {% if activity.account %}
+                                    <a href="{% url 'customers:account_detail' pk=activity.account.pk %}" class="text-indigo-600 hover:text-indigo-900 hover:underline">
+                                        <i class="fas fa-building fa-fw mr-1"></i>Firma: {{ activity.account.name }}
+                                    </a>
+                                {% elif activity.contact %}
+                                    <a href="{% url 'customers:contact_detail' pk=activity.contact.pk %}" class="text-indigo-600 hover:text-indigo-900 hover:underline">
+                                        <i class="fas fa-user fa-fw mr-1"></i>Kontakt: {{ activity.contact }}
+                                    </a>
+                                {% elif activity.opportunity %}
+                                    <a href="{% url 'opportunities:opportunity_detail' pk=activity.opportunity.pk %}" class="text-indigo-600 hover:text-indigo-900 hover:underline">
+                                        <i class="fas fa-dollar-sign fa-fw mr-1"></i>Opportunity: {{ activity.opportunity.name }}
+                                    </a>
+                                {% elif activity.lead %}
+                                    <a href="{% url 'leads:lead_detail' pk=activity.lead.pk %}" class="text-indigo-600 hover:text-indigo-900 hover:underline">
+                                        <i class="fas fa-filter fa-fw mr-1"></i>Lead: {{ activity.lead }}
+                                    </a>
+                                {# elif activity.case ... #}
+                                {% else %}
+                                    Kein direkter Bezug
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
 
-    <h3>Aktivitätsdetails</h3>
-    <p><strong>Typ:</strong> {{ activity.get_type_display }}</p>
-    <p><strong>Betreff:</strong> {{ activity.subject }}</p>
-    <p><strong>Datum/Fälligkeit:</strong> {{ activity.activity_date|date:"d.m.Y H:i" }}</p>
-    <p><strong>Status:</strong> {{ activity.get_status_display }}</p>
-    <p><strong>Zugewiesen an:</strong> {{ activity.assigned_to|default:"-" }}</p>
-    <p><strong>Notizen:</strong> {{ activity.notes|linebreaksbr|default:"-" }}</p>
-    <p><strong>Bezug:</strong>
-        {% if activity.account %}<a href="{% url 'customers:account_detail' pk=activity.account.pk %}">Firma: {{ activity.account.name }}</a>
-        {% elif activity.contact %}<a href="{% url 'customers:contact_detail' pk=activity.contact.pk %}">Kontakt: {{ activity.contact }}</a>
-        {% elif activity.opportunity %}<a href="{% url 'opportunities:opportunity_detail' pk=activity.opportunity.pk %}">Opportunity: {{ activity.opportunity.name }}</a>
-        {% elif activity.lead %}<a href="{% url 'leads:lead_detail' pk=activity.lead.pk %}">Lead: {{ activity.lead }}</a>
-        {# elif activity.case ... #}
-        {% else %}Kein direkter Bezug{% endif %}
-    </p>
-    <p><strong>Erstellt am:</strong> {{ activity.created_at }}</p>
-    <p><strong>Aktualisiert am:</strong> {{ activity.updated_at }}</p>
+                    <div class="mt-6">
+                        <p class="text-sm text-gray-500 mb-1"><i class="fas fa-sticky-note fa-fw mr-1 text-gray-400"></i>Notizen</p>
+                        <div class="bg-gray-50 p-4 rounded border border-gray-200 min-h-[100px]">
+                            {{ activity.notes|linebreaksbr|default:"<span class='text-gray-400 italic'>Keine Notizen vorhanden</span>" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-     {# Füge hier später Abschnitte für Notes, Attachments etc. hinzu #}
+        <!-- Seitenleiste -->
+        <div class="lg:col-span-1">
+            <!-- Schnellaktionen -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100 mb-6">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-lg font-medium text-gray-800">Schnellaktionen</h3>
+                </div>
+                <div class="p-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <a href="{% url 'activities:activity_edit' pk=activity.pk %}" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-150">
+                            <i class="fas fa-pencil-alt text-yellow-600 text-xl mb-2"></i>
+                            <span class="text-sm text-gray-700">Bearbeiten</span>
+                        </a>
+                        <a href="{% url 'activities:activity_add' %}" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-150">
+                            <i class="fas fa-plus text-blue-600 text-xl mb-2"></i>
+                            <span class="text-sm text-gray-700">Neue Aktivität</span>
+                        </a>
+                        {% if activity.status == 'PLANNED' %}
+                            <a href="#" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-150">
+                                <i class="fas fa-check-circle text-green-600 text-xl mb-2"></i>
+                                <span class="text-sm text-gray-700">Als erledigt markieren</span>
+                            </a>
+                            <a href="#" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-150">
+                                <i class="fas fa-times-circle text-red-600 text-xl mb-2"></i>
+                                <span class="text-sm text-gray-700">Als nicht erledigt markieren</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
 
+            <!-- Zusätzliche Informationen -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-lg font-medium text-gray-800">Zusätzliche Informationen</h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1"><i class="fas fa-plus-circle fa-fw mr-1"></i>Erstellt am</p>
+                            <p class="font-medium">{{ activity.created_at|date:"d.m.Y H:i" }} von {{ activity.owner.username|default:"System" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1"><i class="fas fa-edit fa-fw mr-1"></i>Aktualisiert am</p>
+                            <p class="font-medium">{{ activity.updated_at|date:"d.m.Y H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zurück zur Liste -->
+            <a href="{% url 'activities:activity_list' %}" class="block text-center py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition duration-150 mt-6">
+                <i class="fas fa-arrow-left mr-2"></i> Zurück zur Liste
+            </a>
+        </div>
+    </div>
 {% endblock %}

@@ -9,12 +9,14 @@ class LeadForm(forms.ModelForm):
             'first_name',
             'last_name',
             'company_name',
+            'job_title',
             'email',
             'phone_number',
             'status',
             'source',
             'tags',
             'assigned_group',
+            'notes',
             # 'campaign' # Später hinzufügen
         ]
         widgets = {

@@ -16,6 +16,7 @@ class LeadListView(LoginRequiredMixin, ListView):
     model = Lead
     template_name = 'leads/lead_list.html'
     context_object_name = 'leads'
+    paginate_by = 10
 
     def get_queryset(self):
         return Lead.objects.filter(owner=self.request.user)

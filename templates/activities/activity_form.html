@@ -1,14 +1,133 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
 
-{% block title %}{% if object %}Aktivität bearbeiten{% else %}Neue Aktivität hinzufügen{% endif %} - Mein CRM{% endblock %}
+{% block title %}{% if object %}Aktivität bearbeiten{% else %}Neue Aktivität hinzufügen{% endif %} - CRM System{% endblock %}
 
-{% block page_title %}{% if object %}Aktivität bearbeiten: {{ object.subject }}{% else %}Neue Aktivität hinzufügen{% endif %}{% endblock %}
+{% block page_title %}
+    <div class="mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800 flex items-center">
+            <i class="{% if object %}fas fa-pencil-alt{% else %}fas fa-plus-circle{% endif %} mr-3 text-blue-600"></i>
+            {% if object %}Aktivität bearbeiten: {{ object.subject }}{% else %}Neue Aktivität hinzufügen{% endif %}
+        </h1>
+    </div>
+{% endblock %}
 
 {% block content %}
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Speichern</button>
-        <a href="{% if object %}{% url 'activities:activity_detail' pk=object.pk %}{% else %}{% url 'activities:activity_list' %}{% endif %}">Abbrechen</a>
-    </form>
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100">
+        <div class="p-6 md:p-8">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {# Nicht-Feld-Fehler (oben für bessere Sichtbarkeit) #}
+                {% if form.non_field_errors %}
+                    <div class="mb-6 p-4 bg-red-50 text-red-700 rounded-md border border-red-200 text-sm">
+                        {% for error in form.non_field_errors %}
+                            <p class="flex items-center"><i class="fas fa-exclamation-triangle mr-2"></i>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {# Grid Layout für die Formularfelder #}
+                <div class="grid grid-cols-1 gap-y-6 gap-x-8 md:grid-cols-2">
+                    {% for field in form %}
+                        {% if field.name == 'notes' or field.name == 'description' %}
+                            <div class="md:col-span-2">
+                                <div class="mb-1">
+                                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                        {{ field.label }}
+                                        {% if field.field.required %}
+                                            <span class="text-red-500 font-semibold">*</span>
+                                        {% endif %}
+                                    </label>
+                                    
+                                    <div class="mt-1">
+                                        {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
+                                    </div>
+                                    
+                                    {% if field.help_text %}
+                                        <p class="mt-1 text-xs text-gray-500">{{ field.help_text|safe }}</p>
+                                    {% endif %}
+                                    
+                                    {% if field.errors %}
+                                        <div class="mt-1 text-xs text-red-600">
+                                            {% for error in field.errors %}
+                                                <p class="flex items-center"><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div>
+                                <div class="mb-1">
+                                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                        {{ field.label }}
+                                        {% if field.field.required %}
+                                            <span class="text-red-500 font-semibold">*</span>
+                                        {% endif %}
+                                    </label>
+                                    
+                                    <div class="mt-1 relative">
+                                        {% if field.name == 'type' or field.name == 'status' or field.name == 'priority' %}
+                                            {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
+                                        {% elif field.name == 'activity_date' %}
+                                            <div class="flex items-center">
+                                                <div class="relative w-full">
+                                                    {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10" }}
+                                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <i class="far fa-calendar-alt text-gray-400"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% elif field.name == 'assigned_to' %}
+                                            <div class="relative">
+                                                {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
+                                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                    <i class="fas fa-user text-gray-400"></i>
+                                                </div>
+                                            </div>
+                                        {% elif field.name == 'subject' %}
+                                            <div class="relative">
+                                                {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
+                                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                    <i class="fas fa-heading text-gray-400"></i>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if field.help_text %}
+                                        <p class="mt-1 text-xs text-gray-500">{{ field.help_text|safe }}</p>
+                                    {% endif %}
+                                    
+                                    {% if field.errors %}
+                                        <div class="mt-1 text-xs text-red-600">
+                                            {% for error in field.errors %}
+                                                <p class="flex items-center"><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                {# Trennlinie und Buttons am Ende #}
+                <div class="mt-8 pt-5 border-t border-gray-200">
+                    <div class="flex justify-end space-x-4">
+                        <a href="{% if object %}{% url 'activities:activity_detail' pk=object.pk %}{% else %}{% url 'activities:activity_list' %}{% endif %}"
+                           class="inline-flex justify-center items-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
+                           <i class="fas fa-times mr-2"></i> Abbrechen
+                        </a>
+                        <button type="submit" class="inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150">
+                            <i class="fas fa-save mr-2"></i> Speichern
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 {% endblock %}

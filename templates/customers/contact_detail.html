@@ -1,43 +1,303 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
 
-{% block title %}Kontakt: {{ contact }} - Mein CRM{% endblock %}
+{% block title %}Kontakt: {{ contact.first_name }} {{ contact.last_name }} - CRM System{% endblock %}
 
-{% block page_title %}Detail: {{ contact }}{% endblock %}
+{% block page_title %}
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-user mr-3 text-blue-600"></i>
+            {{ contact.first_name }} {{ contact.last_name }}
+        </h1>
+        <div class="flex space-x-2">
+            <a href="{% url 'customers:contact_edit' pk=contact.pk %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
+                <i class="fas fa-pencil-alt mr-1.5"></i> Bearbeiten
+            </a>
+            <a href="{% url 'customers:contact_delete' pk=contact.pk %}" class="bg-red-500 hover:bg-red-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
+                <i class="fas fa-trash-alt mr-1.5"></i> Löschen
+            </a>
+        </div>
+    </div>
+{% endblock %}
 
 {% block content %}
-    <p>
-        <a href="{% url 'customers:contact_edit' pk=contact.pk %}">Bearbeiten</a> |
-        <a href="{% url 'customers:contact_delete' pk=contact.pk %}">Löschen</a> |
-        <a href="{% url 'customers:contact_list' %}">Zurück zur Liste</a>
-    </p>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Hauptinformationen -->
+        <div class="lg:col-span-2">
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100 mb-6">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-lg font-medium text-gray-800">Kontaktdetails</h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Vorname</p>
+                            <p class="font-medium">{{ contact.first_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Nachname</p>
+                            <p class="font-medium">{{ contact.last_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Firma</p>
+                            <p class="font-medium">
+                                {% if contact.account %}
+                                    <a href="{% url 'customers:account_detail' pk=contact.account.pk %}" class="text-blue-600 hover:text-blue-800">
+                                        {{ contact.account.name }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Position</p>
+                            <p class="font-medium">{{ contact.job_title|default:"-" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Telefon</p>
+                            <p class="font-medium">
+                                {% if contact.phone_number %}
+                                    <a href="tel:{{ contact.phone_number }}" class="text-blue-600 hover:text-blue-800">
+                                        {{ contact.phone_number }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Mobil</p>
+                            <p class="font-medium">
+                                {% if contact.mobile_number %}
+                                    <a href="tel:{{ contact.mobile_number }}" class="text-blue-600 hover:text-blue-800">
+                                        {{ contact.mobile_number }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">E-Mail</p>
+                            <p class="font-medium">
+                                {% if contact.email %}
+                                    <a href="mailto:{{ contact.email }}" class="text-blue-600 hover:text-blue-800">
+                                        {{ contact.email }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Besitzer</p>
+                            <p class="font-medium flex items-center">
+                                <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-200 mr-2">
+                                    <span class="text-sm font-medium leading-none text-gray-500">
+                                        {{ contact.owner.username|first|upper }}
+                                    </span>
+                                </span>
+                                {{ contact.owner|default:"-" }}
+                            </p>
+                        </div>
+                    </div>
 
-    <h3>Kontaktdetails</h3>
-    <p><strong>Vorname:</strong> {{ contact.first_name }}</p>
-    <p><strong>Nachname:</strong> {{ contact.last_name }}</p>
-    <p><strong>Firma:</strong> {% if contact.account %}<a href="{% url 'customers:account_detail' pk=contact.account.pk %}">{{ contact.account.name }}</a>{% else %}-{% endif %}</p>
-    <p><strong>Position:</strong> {{ contact.job_title|default:"-" }}</p>
-    <p><strong>E-Mail:</strong> {{ contact.email|default:"-" }}</p>
-    <p><strong>Telefon:</strong> {{ contact.phone_number|default:"-" }}</p>
-    <p><strong>Besitzer:</strong> {{ contact.owner|default:"-" }}</p>
-    <p><strong>Zust. Team:</strong> {{ contact.assigned_group|default:"-" }}</p>
-    <p><strong>Tags:</strong> {{ contact.tags.all|join:", " }}</p>
-    <p><strong>Erstellt am:</strong> {{ contact.created_at }}</p>
-    <p><strong>Aktualisiert am:</strong> {{ contact.updated_at }}</p>
+                    <div class="mt-6">
+                        <p class="text-sm text-gray-500 mb-1">Adresse</p>
+                        <p class="font-medium">
+                            {% if contact.address %}
+                                <address class="not-italic">
+                                    {{ contact.address|linebreaks }}
+                                </address>
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </p>
+                    </div>
 
-    <hr>
-    <h3>Zugehörige Aktivitäten</h3>
-     {# Annahme: Es gibt eine URL 'activities:activity_add' #}
-    <p><a href="#">Neue Aktivität für diesen Kontakt hinzufügen</a></p> {# URL anpassen! #}
-    {% if activities %}
-         <ul>
-            {% for activity in activities %}
-                <li><a href="#">{{ activity.subject }}</a> - {{ activity.get_type_display }} ({{ activity.activity_date|date:"d.m.Y H:i" }})</li> {# URL anpassen! #}
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Keine Aktivitäten zugeordnet.</p>
-    {% endif %}
+                    {% if contact.notes %}
+                        <div class="mt-6">
+                            <p class="text-sm text-gray-500 mb-1">Notizen</p>
+                            <p class="text-gray-700">{{ contact.notes|linebreaks }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
 
-    {# Füge hier später Abschnitte für Notes, Attachments etc. hinzu #}
+            <!-- Opportunities -->
+            {% if opportunities %}
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100 mb-6">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-800">Opportunities</h3>
+                        <a href="{% url 'opportunities:opportunity_add' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            <i class="fas fa-plus mr-1"></i> Opportunity hinzufügen
+                        </a>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phase</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Betrag</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Abschlussdatum</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for opportunity in opportunities %}
+                                        <tr class="hover:bg-gray-50 transition duration-150">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <a href="{% url 'opportunities:opportunity_detail' pk=opportunity.pk %}" class="text-blue-600 hover:text-blue-900 font-medium">
+                                                    {{ opportunity.name }}
+                                                </a>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full
+                                                    {% if opportunity.stage == 'CLOSED_WON' %} bg-green-100 text-green-800
+                                                    {% elif opportunity.stage == 'CLOSED_LOST' %} bg-red-100 text-red-800
+                                                    {% else %} bg-blue-100 text-blue-800 {% endif %}">
+                                                    {{ opportunity.get_stage_display }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                                <span class="font-medium">{{ opportunity.amount }} €</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                                {{ opportunity.close_date|date:"d.m.Y" }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div class="flex justify-end space-x-3">
+                                                    <a href="{% url 'opportunities:opportunity_detail' pk=opportunity.pk %}" class="text-gray-500 hover:text-blue-600 transition duration-150" title="Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'opportunities:opportunity_edit' pk=opportunity.pk %}" class="text-gray-500 hover:text-yellow-600 transition duration-150" title="Bearbeiten">
+                                                        <i class="fas fa-pencil-alt"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
 
+            <!-- Aktivitäten -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <h3 class="text-lg font-medium text-gray-800">Aktivitäten</h3>
+                    <a href="{% url 'activities:activity_add' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        <i class="fas fa-plus mr-1"></i> Aktivität hinzufügen
+                    </a>
+                </div>
+                <div class="p-6">
+                    {% if activities %}
+                        <div class="space-y-4">
+                            {% for activity in activities %}
+                                <div class="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0 mt-1">
+                                            <span class="inline-flex items-center justify-center h-8 w-8 rounded-full
+                                                {% if activity.type == 'CALL' %} bg-purple-100 text-purple-800
+                                                {% elif activity.type == 'MEETING' %} bg-blue-100 text-blue-800
+                                                {% elif activity.type == 'TASK' %} bg-yellow-100 text-yellow-800
+                                                {% elif activity.type == 'EMAIL' %} bg-green-100 text-green-800
+                                                {% else %} bg-gray-100 text-gray-800 {% endif %}">
+                                                {% if activity.type == 'CALL' %}<i class="fas fa-phone-alt"></i>
+                                                {% elif activity.type == 'MEETING' %}<i class="fas fa-users"></i>
+                                                {% elif activity.type == 'TASK' %}<i class="fas fa-tasks"></i>
+                                                {% elif activity.type == 'EMAIL' %}<i class="fas fa-envelope"></i>
+                                                {% else %}<i class="fas fa-calendar-check"></i>{% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="ml-3 flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <a href="{% url 'activities:activity_detail' pk=activity.pk %}" class="text-blue-600 hover:text-blue-800 font-medium">{{ activity.subject }}</a>
+                                                <span class="text-sm text-gray-500">{{ activity.activity_date|date:"d.m.Y H:i" }}</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mt-1">{{ activity.get_type_display }} - {{ activity.get_status_display }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500 italic">Keine Aktivitäten vorhanden. Fügen Sie Aktivitäten hinzu, um Interaktionen zu verfolgen.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Seitenleiste -->
+        <div class="lg:col-span-1">
+            <!-- Schnellaktionen -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100 mb-6">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-lg font-medium text-gray-800">Schnellaktionen</h3>
+                </div>
+                <div class="p-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <a href="{% url 'activities:activity_add' %}" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-150">
+                            <i class="fas fa-phone-alt text-blue-600 text-xl mb-2"></i>
+                            <span class="text-sm text-gray-700">Anruf planen</span>
+                        </a>
+                        <a href="{% url 'activities:activity_add' %}" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-150">
+                            <i class="fas fa-users text-purple-600 text-xl mb-2"></i>
+                            <span class="text-sm text-gray-700">Meeting</span>
+                        </a>
+                        <a href="{% url 'activities:activity_add' %}" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-150">
+                            <i class="fas fa-tasks text-yellow-600 text-xl mb-2"></i>
+                            <span class="text-sm text-gray-700">Aufgabe</span>
+                        </a>
+                        <a href="{% url 'activities:activity_add' %}" class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-150">
+                            <i class="fas fa-envelope text-green-600 text-xl mb-2"></i>
+                            <span class="text-sm text-gray-700">E-Mail</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zusätzliche Informationen -->
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100 mb-6">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-lg font-medium text-gray-800">Zusätzliche Informationen</h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Erstellt am</p>
+                            <p class="font-medium">{{ contact.created_at|date:"d.m.Y H:i" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Aktualisiert am</p>
+                            <p class="font-medium">{{ contact.updated_at|date:"d.m.Y H:i" }}</p>
+                        </div>
+                        {% if contact.tags.all %}
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1">Tags</p>
+                                <div class="flex flex-wrap gap-2">
+                                    {% for tag in contact.tags.all %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {{ tag }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zurück zur Liste -->
+            <a href="{% url 'customers:contact_list' %}" class="block text-center py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition duration-150">
+                <i class="fas fa-arrow-left mr-2"></i> Zurück zur Liste
+            </a>
+        </div>
+    </div>
 {% endblock %}
+

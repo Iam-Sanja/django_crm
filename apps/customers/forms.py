@@ -10,6 +10,7 @@ class AccountForm(forms.ModelForm):
             'name',
             'website',
             'phone_number',
+            'email',
             'address',
             'industry',
             'tags',
@@ -37,7 +38,9 @@ class ContactForm(forms.ModelForm):
             'last_name',
             'email',
             'phone_number',
+            'mobile_number',
             'job_title',
+            'address',
             'account', # Verknüpfung zur Firma
             'tags',
             'assigned_group',

@@ -1,40 +1,71 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Login - Mein CRM{% endblock %}
-
-{% block page_title %}Login{% endblock %}
+{% block title %}Login{% endblock %}
 
 {% block content %}
-    {% if form.errors %}
-        <p style="color: red;">Benutzername oder Passwort ungültig. Bitte versuchen Sie es erneut.</p>
-    {% endif %}
-
-    {% if next %}
-        {% if user.is_authenticated %}
-        <p>Ihr Account hat keinen Zugriff auf diese Seite. Um fortzufahren,
-        loggen Sie sich bitte mit einem Account ein, der Zugriff hat.</p>
-        {% else %}
-        <p>Bitte loggen Sie sich ein, um diese Seite zu sehen.</p>
-        {% endif %}
-    {% endif %}
-
-    <form method="post" action="{% url 'login' %}">
-        {% csrf_token %}
-        <table> {# Einfache Tabelle für Layout #}
-            <tr>
-                <td>{{ form.username.label_tag }}</td>
-                <td>{{ form.username }}</td>
-            </tr>
-            <tr>
-                <td>{{ form.password.label_tag }}</td>
-                <td>{{ form.password }}</td>
-            </tr>
-        </table>
-        <input type="submit" value="Login" />
-        <input type="hidden" name="next" value="{{ next }}" /> {# Leitet nach Login weiter #}
-    </form>
-
-    {# Optional: Link zur Passwort-Zurücksetzung hinzufügen #}
-    {# <p><a href="{% url 'password_reset' %}">Passwort vergessen?</a></p> #}
-
+<div class="flex justify-center items-center min-h-[60vh]">
+    <div class="bg-white shadow-md rounded-lg overflow-hidden w-full max-w-md">
+        <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
+            <h2 class="text-xl font-semibold text-gray-800">Anmelden</h2>
+        </div>
+        
+        <div class="p-6">
+            {% if form.errors %}
+                <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+                    <p>Benutzername oder Passwort ist falsch. Bitte versuchen Sie es erneut.</p>
+                </div>
+            {% endif %}
+            
+            {% if next %}
+                {% if user.is_authenticated %}
+                    <div class="mb-4 p-4 bg-yellow-100 text-yellow-700 rounded-md">
+                        <p>Ihr Konto hat keine Berechtigung, auf diese Seite zuzugreifen. Bitte melden Sie sich mit einem Konto an, das über die entsprechenden Berechtigungen verfügt.</p>
+                    </div>
+                {% else %}
+                    <div class="mb-4 p-4 bg-blue-100 text-blue-700 rounded-md">
+                        <p>Bitte melden Sie sich an, um diese Seite zu sehen.</p>
+                    </div>
+                {% endif %}
+            {% endif %}
+            
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label for="id_username" class="block text-sm font-medium text-gray-700 mb-1">Benutzername</label>
+                    <input type="text" name="username" id="id_username" autofocus required 
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+                
+                <div class="mb-6">
+                    <label for="id_password" class="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
+                    <input type="password" name="password" id="id_password" required 
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+                
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" name="remember_me" id="remember_me" 
+                               class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                        <label for="remember_me" class="ml-2 block text-sm text-gray-700">
+                            Angemeldet bleiben
+                        </label>
+                    </div>
+                    
+                    <div class="text-sm">
+                        <a href="{% url 'password_reset' %}" class="text-blue-600 hover:text-blue-800">
+                            Passwort vergessen?
+                        </a>
+                    </div>
+                </div>
+                
+                <input type="hidden" name="next" value="{{ next }}">
+                
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded">
+                    Anmelden
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
