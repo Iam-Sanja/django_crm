@@ -1,6 +1,6 @@
 # apps/activities/models.py
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -30,7 +30,7 @@ class Activity(models.Model):
     status = models.CharField(_("Status"), max_length=20, choices=ActivityStatus.choices, default=ActivityStatus.PLANNED)
     created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated At"), auto_now=True)
-    assigned_to = models.ForeignKey(User, related_name="activities", on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Assigned To"))
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="activities", on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Assigned To"))
 
     # Optional relations to other objects
     account = models.ForeignKey('customers.Account', related_name="activities", on_delete=models.CASCADE, null=True, blank=True)

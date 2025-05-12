@@ -6,6 +6,9 @@ from django.http import Http404
 
 from .models import Opportunity # OpportunityProduct wird meist über Opportunity angezeigt/bearbeitet
 from .forms import OpportunityForm # Annahme: Form existiert
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class OpportunityListView(LoginRequiredMixin, ListView):
     model = Opportunity

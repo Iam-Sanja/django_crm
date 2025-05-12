@@ -1,9 +1,9 @@
 # apps/core/models.py
 from django.db import models
-from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
 class Tag(models.Model):
     """Model for tags/keywords."""
@@ -24,7 +24,7 @@ class Note(models.Model):
     content = models.TextField(_("Content"))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(User, related_name="notes_created", on_delete=models.SET_NULL, null=True, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="notes_created", on_delete=models.SET_NULL, null=True, blank=True)
 
     # Generic Relation
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
@@ -46,7 +46,7 @@ class Attachment(models.Model):
     mime_type = models.CharField(_("MIME Type"), max_length=100, blank=True) # Wird oft automatisch gesetzt
     size = models.PositiveIntegerField(_("Size (Bytes)"), blank=True, null=True) # Kann beim Speichern berechnet werden
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    uploaded_by = models.ForeignKey(User, related_name="attachments_uploaded", on_delete=models.SET_NULL, null=True, blank=True)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="attachments_uploaded", on_delete=models.SET_NULL, null=True, blank=True)
 
     # Generic Relation
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)

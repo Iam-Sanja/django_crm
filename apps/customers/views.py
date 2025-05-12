@@ -7,6 +7,9 @@ from django.http import Http404
 
 from .models import Account, Contact
 from .forms import AccountForm, ContactForm
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 # --- Account Views ---
 

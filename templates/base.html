@@ -48,15 +48,15 @@
                 {% endif %}
                  <div>
                     {% if user.is_authenticated %}
-                        <span class="text-sm text-gray-700 mr-4">Angemeldet als: {{ user.username }}</span>
-                        <form action="{% url 'logout' %}" method="post" class="inline">
+                        <span class="text-sm text-gray-700 mr-4">Angemeldet als: {{ user.first_name }} {{ user.last_name }}</span>
+                        <form action="{% url 'accounts:logout' %}" method="post" class="inline">
                              {% csrf_token %}
                              <button type="submit" class="bg-red-500 hover:bg-red-700 text-white text-sm font-bold py-1 px-3 rounded">
                                  <i class="fas fa-sign-out-alt mr-1"></i>Logout
                              </button>
                         </form>
                     {% else %}
-                        <a href="{% url 'login' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        <a href="{% url 'accounts:login' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             <i class="fas fa-sign-in-alt mr-1"></i>Login
                         </a>
                     {% endif %}

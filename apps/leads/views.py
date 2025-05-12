@@ -12,6 +12,9 @@ from django.contrib.auth.decorators import login_required
 
 from .models import Lead
 from .forms import LeadForm
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class LeadListView(LoginRequiredMixin, ListView):
     model = Lead

@@ -1,7 +1,8 @@
 # apps/leads/models.py
 from django.db import models
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 # Import Campaign model später, wenn 'campaigns' App existiert
 # from apps.campaigns.models import Campaign
 
@@ -26,7 +27,7 @@ class Lead(models.Model):
     source = models.CharField(_("Source"), max_length=100, blank=True, null=True) # Evtl. auch Choices?
     created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated At"), auto_now=True)
-    owner = models.ForeignKey(User, related_name="owned_leads", on_delete=models.SET_NULL, null=True, blank=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="owned_leads", on_delete=models.SET_NULL, null=True, blank=True)
     assigned_group = models.ForeignKey(Group, related_name="assigned_leads", on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Assigned Team"))
     tags = models.ManyToManyField('core.Tag', blank=True, related_name="leads", verbose_name=_("Tags"))
     notes = models.TextField(_("Notes"), blank=True, null=True)

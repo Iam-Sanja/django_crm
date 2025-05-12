@@ -1,6 +1,7 @@
 # apps/customers/models.py
 from django.db import models
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 class Account(models.Model):
@@ -13,7 +14,7 @@ class Account(models.Model):
     industry = models.CharField(_("Industry"), max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated At"), auto_now=True)
-    owner = models.ForeignKey(User, related_name="owned_accounts", on_delete=models.SET_NULL, null=True, blank=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="owned_accounts", on_delete=models.SET_NULL, null=True, blank=True)
     assigned_group = models.ForeignKey(Group, related_name="assigned_accounts", on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Assigned Team"))
     tags = models.ManyToManyField('core.Tag', blank=True, related_name="accounts", verbose_name=_("Tags"))
 
@@ -37,7 +38,7 @@ class Contact(models.Model):
     created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated At"), auto_now=True)
     account = models.ForeignKey(Account, related_name="contacts", on_delete=models.CASCADE, null=True, blank=True, verbose_name=_("Company")) # CASCADE: Wenn Firma gelöscht, Kontakt auch? Oder SET_NULL?
-    owner = models.ForeignKey(User, related_name="owned_contacts", on_delete=models.SET_NULL, null=True, blank=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="owned_contacts", on_delete=models.SET_NULL, null=True, blank=True)
     assigned_group = models.ForeignKey(Group, related_name="assigned_contacts", on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Assigned Team"))
     tags = models.ManyToManyField('core.Tag', blank=True, related_name="contacts", verbose_name=_("Tags"))
 
