@@ -10,7 +10,7 @@
             {{ contact.first_name }} {{ contact.last_name }}
         </h1>
         <div class="flex space-x-2">
-            <a href="{% url 'customers:contact_edit' pk=contact.pk %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
+            <a href="{% url 'customers:api_contact_update' pk=contact.pk %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
                 <i class="fas fa-pencil-alt mr-1.5"></i> Bearbeiten
             </a>
             <a href="{% url 'customers:contact_delete' pk=contact.pk %}" class="bg-red-500 hover:bg-red-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">

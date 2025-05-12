@@ -10,7 +10,7 @@
             {{ account.name }}
         </h1>
         <div class="flex space-x-2">
-            <a href="{% url 'customers:account_edit' pk=account.pk %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
+            <a href="{% url 'customers:api_account_update' pk=account.pk %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
                 <i class="fas fa-pencil-alt mr-1.5"></i> Bearbeiten
             </a>
             <a href="{% url 'customers:account_delete' pk=account.pk %}" class="bg-red-500 hover:bg-red-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
@@ -109,12 +109,12 @@
                     {% endif %}
                 </div>
             </div>
-
+            <!--TODO api_contact_create gives 405 Error, same by contact - reason views not allowed-->
             <!-- Kontakte -->
             <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100 mb-6">
                 <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                     <h3 class="text-lg font-medium text-gray-800">Kontakte</h3>
-                    <a href="{% url 'customers:contact_add' %}?account={{ account.pk }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    <a href="{% url 'customers:api_contact_create' %}?account={{ account.pk }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                         <i class="fas fa-plus mr-1"></i> Kontakt hinzufügen
                     </a>
                 </div>

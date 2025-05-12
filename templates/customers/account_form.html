@@ -1,7 +1,54 @@
 {% extends 'base.html' %}
-{% load widget_tweaks %}
 
 {% block title %}{% if object %}Firma bearbeiten{% else %}Neue Firma hinzufügen{% endif %} - CRM System{% endblock %}
+
+{% block extra_head %}
+<script>
+    async function handleSubmit(event) {
+        event.preventDefault();
+        
+        const formData = {
+            name: document.getElementById('name').value,
+            website: document.getElementById('website').value,
+            phone_number: document.getElementById('phone_number').value,
+            email: document.getElementById('email').value,
+            address: document.getElementById('address').value,
+            industry: document.getElementById('industry').value,
+            tags: Array.from(document.getElementById('tags').selectedOptions).map(opt => opt.value),
+            assigned_group: document.getElementById('assigned_group').value || null
+        };
+
+        const url = {% if object %}
+            "{% url 'customers:api_account_update' pk=object.pk %}"
+        {% else %}
+            "{% url 'customers:api_account_create' %}"
+        {% endif %};
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                window.location.href = "{% url 'customers:account_list' %}";
+            } else {
+                document.getElementById('error-message').textContent = data.message;
+                document.getElementById('error-message').classList.remove('hidden');
+            }
+        } catch (error) {
+            document.getElementById('error-message').textContent = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+            document.getElementById('error-message').classList.remove('hidden');
+        }
+    }
+</script>
+{% endblock %}
 
 {% block page_title %}
     <div class="mb-6">
@@ -15,7 +62,9 @@
 {% block content %}
     <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100">
         <div class="p-6 md:p-8">
-            <form method="post" novalidate>
+            <div id="error-message" class="hidden mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded"></div>
+            
+            <form id="accountForm" onsubmit="handleSubmit(event)" novalidate>
                 {% csrf_token %}
 
                 {# Nicht-Feld-Fehler (oben für bessere Sichtbarkeit) #}

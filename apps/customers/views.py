@@ -1,12 +1,12 @@
 # apps/customers/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
 
 from .models import Account, Contact
-from .forms import AccountForm, ContactForm
+from apps.core.models import Tag
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -43,33 +43,29 @@ class AccountDetailView(LoginRequiredMixin, DetailView):
         context['activities'] = self.object.activities.filter(account__owner=self.request.user)
         return context
 
-class AccountCreateView(LoginRequiredMixin, CreateView):
-    model = Account
-    form_class = AccountForm
+class AccountCreateView(LoginRequiredMixin, TemplateView):
     template_name = 'customers/account_form.html'
-    
-    def get_success_url(self):
-        return reverse_lazy('customers:account_detail', kwargs={'pk': self.object.pk})
 
-    def form_valid(self, form):
-        # Owner automatisch setzen
-        form.instance.owner = self.request.user
-        return super().form_valid(form)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tags'] = Tag.objects.all()
+        return context
 
-class AccountUpdateView(LoginRequiredMixin, UpdateView):
+class AccountUpdateView(LoginRequiredMixin, DetailView):
     model = Account
-    form_class = AccountForm
     template_name = 'customers/account_form.html'
-    
-    def get_success_url(self):
-        return reverse_lazy('customers:account_detail', kwargs={'pk': self.object.pk})
+    context_object_name = 'object'
 
     def get_object(self, queryset=None):
-        # Objekt holen und Berechtigung prüfen
         obj = super().get_object(queryset=queryset)
         if obj.owner != self.request.user:
             raise Http404("Account not found or permission denied")
         return obj
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tags'] = Tag.objects.all()
+        return context
 
 class AccountDeleteView(LoginRequiredMixin, DeleteView):
     model = Account
@@ -113,16 +109,13 @@ class ContactDetailView(LoginRequiredMixin, DetailView):
         context['opportunities'] = self.object.opportunities.filter(owner=self.request.user) if hasattr(self.object, 'opportunities') else []
         return context
 
-class ContactCreateView(LoginRequiredMixin, CreateView):
-    model = Contact
-    form_class = ContactForm
+class ContactCreateView(LoginRequiredMixin, TemplateView):
     template_name = 'customers/contact_form.html'
-    
-    def get_success_url(self):
-        return reverse_lazy('customers:contact_detail', kwargs={'pk': self.object.pk})
 
-    def form_valid(self, form):
-        form.instance.owner = self.request.user
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tags'] = Tag.objects.all()
+        context['accounts'] = Account.objects.filter(owner=self.request.user)
         return super().form_valid(form)
 
     # Optional: Wenn von Account-Seite erstellt, Account vorbelegen
@@ -138,19 +131,22 @@ class ContactCreateView(LoginRequiredMixin, CreateView):
                 pass
         return initial
 
-class ContactUpdateView(LoginRequiredMixin, UpdateView):
+class ContactUpdateView(LoginRequiredMixin, DetailView):
     model = Contact
-    form_class = ContactForm
     template_name = 'customers/contact_form.html'
-    
-    def get_success_url(self):
-        return reverse_lazy('customers:contact_detail', kwargs={'pk': self.object.pk})
+    context_object_name = 'object'
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset=queryset)
         if obj.owner != self.request.user:
             raise Http404("Contact not found or permission denied")
         return obj
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tags'] = Tag.objects.all()
+        context['accounts'] = Account.objects.filter(owner=self.request.user)
+        return context
 
 class ContactDeleteView(LoginRequiredMixin, DeleteView):
     model = Contact
