@@ -91,7 +91,7 @@
                             <p class="font-medium flex items-center">
                                 <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-200 mr-2">
                                     <span class="text-sm font-medium leading-none text-gray-500">
-                                        {{ opportunity.owner.username|first|upper }}
+                                        {{ opportunity.owner.email|first|upper }}
                                     </span>
                                 </span>
                                 {{ opportunity.owner|default:"-" }}

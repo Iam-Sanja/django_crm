@@ -1,4 +1,5 @@
 # apps/opportunities/models.py
+import uuid
 from django.db import models
 from django.contrib.auth.models import Group
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -9,6 +10,9 @@ from django.conf import settings
 # Import Campaign später
 # from apps.campaigns.models import Campaign
 
+def generate_uuid():
+    """Generate UUID4 for primary keys"""
+    return str(uuid.uuid4())
 
 class Opportunity(models.Model):
     """Represents a sales deal or potential sale."""
@@ -22,6 +26,7 @@ class Opportunity(models.Model):
         CLOSED_LOST = 'CLOSED_LOST', _('Closed Lost')
         # Füge hier weitere Phasen hinzu
 
+    id = models.UUIDField(primary_key=True, default=generate_uuid, editable=False)
     name = models.CharField(_("Opportunity Name"), max_length=255)
     account = models.ForeignKey('customers.Account', related_name="opportunities", on_delete=models.CASCADE, verbose_name=_("Account")) # Wenn Account gelöscht, was passiert mit Opportunity? PROTECT?
     primary_contact = models.ForeignKey('customers.Contact', related_name="opportunities", on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Primary Contact"))
@@ -54,6 +59,7 @@ class Opportunity(models.Model):
 
 class OpportunityProduct(models.Model):
     """Intermediate model linking Products to an Opportunity."""
+    id = models.UUIDField(primary_key=True, default=generate_uuid, editable=False)
     opportunity = models.ForeignKey(Opportunity, related_name="product_lines", on_delete=models.CASCADE)
 
     # --- AUSKOMMENTIERT ---

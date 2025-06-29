@@ -9,12 +9,14 @@
             <i class="fas fa-user mr-3 text-blue-600"></i>
             {{ contact.first_name }} {{ contact.last_name }}
         </h1>
-        <div class="flex space-x-2">
-            <a href="{% url 'customers:api_contact_update' pk=contact.pk %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
-                <i class="fas fa-pencil-alt mr-1.5"></i> Bearbeiten
+        <div class="flex space-x-4">
+            <a href="{% url 'customers:contact_update' pk=contact.pk %}" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <i class="fas fa-pencil-alt mr-2"></i> Bearbeiten
             </a>
-            <a href="{% url 'customers:contact_delete' pk=contact.pk %}" class="bg-red-500 hover:bg-red-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
-                <i class="fas fa-trash-alt mr-1.5"></i> Löschen
+            <a href="{% url 'customers:contact_delete' pk=contact.pk %}"
+               class="inline-flex items-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                <i class="fas fa-trash-alt mr-2"></i> Löschen
             </a>
         </div>
     </div>
@@ -95,7 +97,7 @@
                             <p class="font-medium flex items-center">
                                 <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-200 mr-2">
                                     <span class="text-sm font-medium leading-none text-gray-500">
-                                        {{ contact.owner.username|first|upper }}
+                                        {{ contact.owner.email|first|upper }}
                                     </span>
                                 </span>
                                 {{ contact.owner|default:"-" }}
@@ -106,9 +108,13 @@
                     <div class="mt-6">
                         <p class="text-sm text-gray-500 mb-1">Adresse</p>
                         <p class="font-medium">
-                            {% if contact.address %}
+                            {% if contact.get_full_address %}
                                 <address class="not-italic">
-                                    {{ contact.address|linebreaks }}
+                                    {% if contact.street %}{{ contact.street }}<br>{% endif %}
+                                    {% if contact.postal_code or contact.city %}
+                                        {% if contact.postal_code %}{{ contact.postal_code }}{% endif %}{% if contact.postal_code and contact.city %} {% endif %}{% if contact.city %}{{ contact.city }}{% endif %}{% if contact.country and contact.country != "Deutschland" %}<br>{% endif %}
+                                    {% endif %}
+                                    {% if contact.country and contact.country != "Deutschland" %}{{ contact.country }}{% endif %}
                                 </address>
                             {% else %}
                                 <span class="text-gray-400">-</span>

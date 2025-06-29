@@ -8,7 +8,7 @@
         <h1 class="text-2xl font-semibold text-gray-800">
             <i class="fas fa-user mr-3 text-blue-600"></i>Kontaktübersicht
         </h1>
-        <a href="{% url 'customers:api_contact_create' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+        <a href="{% url 'customers:contact_create' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
             <i class="fas fa-plus mr-2"></i> Neuen Kontakt
         </a>
     </div>
@@ -73,7 +73,7 @@
                                         <div class="flex-shrink-0 h-8 w-8">
                                             <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-200">
                                                 <span class="text-sm font-medium leading-none text-gray-500">
-                                                    {{ contact.owner.username|first|upper }}
+                                                    {{ contact.owner.email|first|upper }}
                                                 </span>
                                             </span>
                                         </div>
@@ -87,7 +87,7 @@
                                         <a href="{% url 'customers:contact_detail' pk=contact.pk %}" class="text-gray-500 hover:text-blue-600 transition duration-150" title="Details">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{% url 'customers:api_contact_update' pk=contact.pk %}" class="text-gray-500 hover:text-yellow-600 transition duration-150" title="Bearbeiten">
+                                        <a href="{% url 'customers:contact_update' pk=contact.pk %}" class="text-gray-500 hover:text-yellow-600 transition duration-150" title="Bearbeiten">
                                             <i class="fas fa-pencil-alt"></i>
                                         </a>
                                         <a href="{% url 'customers:contact_delete' pk=contact.pk %}" class="text-gray-500 hover:text-red-600 transition duration-150" title="Löschen">

@@ -1,187 +1,1065 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if object %}Firma bearbeiten{% else %}Neue Firma hinzufügen{% endif %} - CRM System{% endblock %}
-
-{% block extra_head %}
-<script>
-    async function handleSubmit(event) {
-        event.preventDefault();
-        
-        const formData = {
-            name: document.getElementById('name').value,
-            website: document.getElementById('website').value,
-            phone_number: document.getElementById('phone_number').value,
-            email: document.getElementById('email').value,
-            address: document.getElementById('address').value,
-            industry: document.getElementById('industry').value,
-            tags: Array.from(document.getElementById('tags').selectedOptions).map(opt => opt.value),
-            assigned_group: document.getElementById('assigned_group').value || null
-        };
-
-        const url = {% if object %}
-            "{% url 'customers:api_account_update' pk=object.pk %}"
-        {% else %}
-            "{% url 'customers:api_account_create' %}"
-        {% endif %};
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: JSON.stringify(formData)
-            });
-
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                window.location.href = "{% url 'customers:account_list' %}";
-            } else {
-                document.getElementById('error-message').textContent = data.message;
-                document.getElementById('error-message').classList.remove('hidden');
-            }
-        } catch (error) {
-            document.getElementById('error-message').textContent = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
-            document.getElementById('error-message').classList.remove('hidden');
-        }
-    }
-</script>
+{% block title %}
+    {% if is_create %}Neue Firma erstellen{% else %}Firma bearbeiten{% endif %}
 {% endblock %}
 
 {% block page_title %}
-    <div class="mb-6">
-        <h1 class="text-2xl font-semibold text-gray-800 flex items-center">
-            <i class="{% if object %}fas fa-pencil-alt{% else %}fas fa-plus-circle{% endif %} mr-3 text-blue-600"></i>
-            {% if object %}Firma bearbeiten: {{ object.name }}{% else %}Neue Firma hinzufügen{% endif %}
-        </h1>
-    </div>
+    {% if is_create %}Neue Firma erstellen{% else %}Firma bearbeiten{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .custom-tag-input {
+        min-height: 38px;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 0.5rem;
+        background-color: white;
+        cursor: text;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+        align-items: flex-start;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        max-height: 120px;
+        overflow-y: auto;
+        position: relative;
+    }
+    
+    .custom-tag-input:focus-within {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15);
+        outline: none;
+    }
+    
+    .custom-tag-input.green:focus-within {
+        border-color: #10b981;
+        box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.15);
+    }
+    
+    .tag-item {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px; /* Vollständig runde Ecken */
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: white;
+        background-color: #3b82f6;
+        border: 1px solid #3b82f6;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        flex-shrink: 0;
+        margin: 0;
+    }
+    
+    .tag-item.green {
+        background-color: #10b981;
+        border-color: #10b981;
+    }
+    
+    .tag-item:hover {
+        filter: brightness(0.9);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .tag-remove {
+        margin-left: 0.5rem;
+        cursor: pointer;
+        font-weight: bold;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+        font-size: 1rem;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .tag-remove:hover {
+        opacity: 1;
+        background-color: rgba(255, 255, 255, 0.3);
+        color: #fca5a5;
+    }
+    
+    .tag-input-field {
+        border: none;
+        outline: none;
+        background: transparent;
+        flex: 1;
+        min-width: 150px;
+        padding: 0.25rem 0;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+    }
+    
+    .tag-input-field::placeholder {
+        color: #9ca3af;
+    }
+    
+    .tag-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-top: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .tag-suggestion {
+        padding: 0.75rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.875rem;
+        transition: background-color 0.15s;
+    }
+    
+    .tag-suggestion:hover,
+    .tag-suggestion.active {
+        background-color: #f3f4f6;
+    }
+    
+    .tag-suggestion:last-child {
+        border-bottom: none;
+    }
+    
+    .form-field-error {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25) !important;
+    }
+    
+    .field-error-message {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Responsive Anpassungen */
+    @media (max-width: 768px) {
+        .custom-tag-input {
+            min-height: 42px;
+            padding: 0.375rem;
+            gap: 0.25rem;
+        }
+        
+        .tag-item {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.6rem;
+        }
+        
+        .tag-input-field {
+            min-width: 120px;
+            font-size: 0.8rem;
+        }
+    }
+    
+    /* Verbesserte Tag-Container Positionierung */
+    .tag-container-wrapper {
+        position: relative;
+        width: 100%;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
     <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100">
         <div class="p-6 md:p-8">
-            <div id="error-message" class="hidden mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded"></div>
-            
-            <form id="accountForm" onsubmit="handleSubmit(event)" novalidate>
+            <form id="accountForm" novalidate>
                 {% csrf_token %}
-
+                
                 {# Nicht-Feld-Fehler (oben für bessere Sichtbarkeit) #}
-                {% if form.non_field_errors %}
-                    <div class="mb-6 p-4 bg-red-50 text-red-700 rounded-md border border-red-200 text-sm">
-                        {% for error in form.non_field_errors %}
-                            <p class="flex items-center"><i class="fas fa-exclamation-triangle mr-2"></i>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+                <div id="formErrors" class="mb-6 p-4 bg-red-50 text-red-700 rounded-md border border-red-200 text-sm hidden">
+                    <p class="flex items-center"><i class="fas fa-exclamation-triangle mr-2"></i><span id="errorMessage"></span></p>
+                </div>
+
+                {# Success Message #}
+                <div id="successMessage" class="mb-6 p-4 bg-green-50 text-green-700 rounded-md border border-green-200 text-sm hidden">
+                    <p class="flex items-center"><i class="fas fa-check-circle mr-2"></i><span id="successText"></span></p>
+                </div>
 
                 {# Grid Layout für die Formularfelder #}
                 <div class="grid grid-cols-1 gap-y-6 gap-x-8 md:grid-cols-2">
-                    {% for field in form %}
-                        {% if field.name == 'description' %}
-                            <div class="md:col-span-2">
-                                <div class="mb-1">
-                                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                        {{ field.label }}
-                                        {% if field.field.required %}
-                                            <span class="text-red-500 font-semibold">*</span>
-                                        {% endif %}
-                                    </label>
-                                    
-                                    <div class="mt-1">
-                                        {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                                    </div>
-                                    
-                                    {% if field.help_text %}
-                                        <p class="mt-1 text-xs text-gray-500">{{ field.help_text|safe }}</p>
-                                    {% endif %}
-                                    
-                                    {% if field.errors %}
-                                        <div class="mt-1 text-xs text-red-600">
-                                            {% for error in field.errors %}
-                                                <p class="flex items-center"><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
-                                            {% endfor %}
+                    {# Name - Pflichtfeld #}
+                    <div class="md:col-span-2">
+                        <div class="mb-1">
+                            <label for="name" class="block text-sm font-medium text-gray-700">
+                                Firmenname
+                                <span class="text-red-500 font-semibold">*</span>
+                            </label>
+                            
+                            <div class="mt-1 relative">
+                                <div class="flex items-center">
+                                    <div class="relative w-full">
+                                        <input type="text" id="name" name="name" required
+                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10"
+                                            placeholder="Firmenname eingeben">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-building text-gray-400"></i>
                                         </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        {% else %}
-                            <div>
-                                <div class="mb-1">
-                                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                        {{ field.label }}
-                                        {% if field.field.required %}
-                                            <span class="text-red-500 font-semibold">*</span>
-                                        {% endif %}
-                                    </label>
-                                    
-                                    <div class="mt-1 relative">
-                                        {% if field.name == 'website' %}
-                                            <div class="flex items-center">
-                                                <div class="relative w-full">
-                                                    {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10" }}
-                                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                        <i class="fas fa-globe text-gray-400"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        {% elif field.name == 'email' %}
-                                            <div class="flex items-center">
-                                                <div class="relative w-full">
-                                                    {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10" }}
-                                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                        <i class="fas fa-envelope text-gray-400"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        {% elif field.name == 'phone' %}
-                                            <div class="flex items-center">
-                                                <div class="relative w-full">
-                                                    {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10" }}
-                                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                        <i class="fas fa-phone text-gray-400"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        {% elif field.name == 'industry' %}
-                                            {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                                        {% else %}
-                                            {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                                        {% endif %}
                                     </div>
-                                    
-                                    {% if field.help_text %}
-                                        <p class="mt-1 text-xs text-gray-500">{{ field.help_text|safe }}</p>
-                                    {% endif %}
-                                    
-                                    {% if field.errors %}
-                                        <div class="mt-1 text-xs text-red-600">
-                                            {% for error in field.errors %}
-                                                <p class="flex items-center"><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
                                 </div>
+                                <div id="name-error" class="field-error-message hidden"></div>
                             </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
+                        </div>
+                    </div>
 
-                {# Trennlinie und Buttons am Ende #}
-                <div class="mt-8 pt-5 border-t border-gray-200">
-                    <div class="flex justify-end space-x-4">
-                        <a href="{% if object %}{% url 'customers:account_detail' pk=object.pk %}{% else %}{% url 'customers:account_list' %}{% endif %}"
-                            class="inline-flex justify-center items-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
-                            <i class="fas fa-times mr-2"></i> Abbrechen
-                        </a>
-                        <button type="submit" class="inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150">
-                            <i class="fas fa-save mr-2"></i> Speichern
-                        </button>
+                    {# Website #}
+                    <div>
+                        <div class="mb-1">
+                            <label for="website" class="block text-sm font-medium text-gray-700">
+                                Website
+                            </label>
+                            
+                            <div class="mt-1 relative">
+                                <div class="flex items-center">
+                                    <div class="relative w-full">
+                                        <input type="url" id="website" name="website"
+                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10"
+                                            placeholder="https://beispiel.de">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-globe text-gray-400"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="website-error" class="field-error-message hidden"></div>
+                            </div>
+                            
+                            <p class="mt-1 text-xs text-gray-500">Bitte vollständige URL eingeben (z.B. https://beispiel.de)</p>
+                        </div>
+                    </div>
+
+                    {# E-Mail #}
+                    <div>
+                        <div class="mb-1">
+                            <label for="email" class="block text-sm font-medium text-gray-700">
+                                E-Mail
+                            </label>
+                            
+                            <div class="mt-1 relative">
+                                <div class="flex items-center">
+                                    <div class="relative w-full">
+                                        <input type="email" id="email" name="email"
+                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10"
+                                            placeholder="info@firma.de">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-envelope text-gray-400"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="email-error" class="field-error-message hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Telefon #}
+                    <div>
+                        <div class="mb-1">
+                            <label for="phone_number" class="block text-sm font-medium text-gray-700">
+                                Telefon
+                            </label>
+                            
+                            <div class="mt-1 relative">
+                                <div class="flex items-center">
+                                    <div class="relative w-full">
+                                        <input type="tel" id="phone_number" name="phone_number"
+                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10"
+                                            placeholder="+49 123 456789">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-phone text-gray-400"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="phone_number-error" class="field-error-message hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Zuständiges Team #}
+                    <div>
+                        <div class="mb-1">
+                            <label for="assigned_group" class="block text-sm font-medium text-gray-700">
+                                Zuständiges Team
+                            </label>
+                            
+                            <div class="mt-1">
+                                <select id="assigned_group" name="assigned_group"
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                    <option value="">Team auswählen</option>
+                                    {% for group in request.user.groups.all %}
+                                        <option value="{{ group.id }}">{{ group.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div id="assigned_group-error" class="field-error-message hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Adressfelder #}
+                    <div class="md:col-span-2">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-map-marker-alt text-blue-500 mr-2"></i>
+                            Adresse
+                        </h3>
+                    </div>
+
+                    {# Straße #}
+                    <div>
+                        <div class="mb-1">
+                            <label for="street" class="block text-sm font-medium text-gray-700">
+                                Straße
+                            </label>
+                            
+                            <div class="mt-1 relative">
+                                <div class="flex items-center">
+                                    <div class="relative w-full">
+                                        <input type="text" id="street" name="street"
+                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10"
+                                            placeholder="Musterstraße 123">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-road text-gray-400"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="street-error" class="field-error-message hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# PLZ #}
+                    <div>
+                        <div class="mb-1">
+                            <label for="postal_code" class="block text-sm font-medium text-gray-700">
+                                PLZ
+                            </label>
+                            
+                            <div class="mt-1 relative">
+                                <div class="flex items-center">
+                                    <div class="relative w-full">
+                                        <input type="text" id="postal_code" name="postal_code"
+                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10"
+                                            placeholder="12345">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-mail-bulk text-gray-400"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="postal_code-error" class="field-error-message hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Stadt #}
+                    <div>
+                        <div class="mb-1">
+                            <label for="city" class="block text-sm font-medium text-gray-700">
+                                Stadt
+                            </label>
+                            
+                            <div class="mt-1 relative">
+                                <div class="flex items-center">
+                                    <div class="relative w-full">
+                                        <input type="text" id="city" name="city"
+                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10"
+                                            placeholder="Musterstadt">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-city text-gray-400"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="city-error" class="field-error-message hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Land #}
+                    <div>
+                        <div class="mb-1">
+                            <label for="country" class="block text-sm font-medium text-gray-700">
+                                Land
+                            </label>
+                            
+                            <div class="mt-1 relative">
+                                <div class="flex items-center">
+                                    <div class="relative w-full">
+                                        <input type="text" id="country" name="country" value="Deutschland"
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10"
+                                        placeholder="Deutschland">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-flag text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="country-error" class="field-error-message hidden"></div>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
+
+        {# Tagging-Felder - VERBESSERT #}
+        <div class="mt-8">
+            <div class="border-t border-gray-200 pt-8">
+                <h3 class="text-lg font-medium text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-tags text-blue-500 mr-2"></i>
+                    Tags & Kategorien
+                </h3>
+                
+                <div class="grid grid-cols-1 gap-y-6 gap-x-8 lg:grid-cols-2">
+                    {# Branchen Tags #}
+                    <div class="space-y-2">
+                        <label for="industry_tags" class="block text-sm font-medium text-gray-700 flex items-center">
+                            <i class="fas fa-industry text-blue-500 mr-2"></i>
+                            Branchen
+                        </label>
+                        
+                        <div class="tag-container-wrapper">
+                            <div id="industry_tags_container" class="custom-tag-input">
+                                <input type="text" id="industry_tags_input" class="tag-input-field" 
+                                    placeholder="z.B. Maschinenbau, Automotive...">
+                            </div>
+                            <div id="industry_tags_suggestions" class="tag-suggestions"></div>
+                            <input type="hidden" id="industry_tags" name="industry_tags">
+                        </div>
+                        
+                        <div class="flex items-start space-x-2">
+                            <i class="fas fa-info-circle text-blue-400 mt-0.5 text-xs"></i>
+                            <p class="text-xs text-gray-500 leading-relaxed">
+                                Geben Sie Branchen ein und drücken Sie <kbd class="px-1 py-0.5 text-xs font-mono bg-gray-100 rounded">Enter</kbd> oder <kbd class="px-1 py-0.5 text-xs font-mono bg-gray-100 rounded">Komma</kbd>. 
+                                Neue Branchen werden automatisch erstellt.
+                            </p>
+                        </div>
+                        <div id="industry_tags-error" class="field-error-message hidden"></div>
+                    </div>
+                    
+                    {# Allgemeine Tags #}
+                    <div class="space-y-2">
+                        <label for="general_tags" class="block text-sm font-medium text-gray-700 flex items-center">
+                            <i class="fas fa-tag text-green-500 mr-2"></i>
+                            Allgemeine Tags
+                        </label>
+                        
+                        <div class="tag-container-wrapper">
+                            <div id="general_tags_container" class="custom-tag-input green">
+                                <input type="text" id="general_tags_input" class="tag-input-field" 
+                                    placeholder="z.B. Partner, VIP, Neukunde...">
+                            </div>
+                            <div id="general_tags_suggestions" class="tag-suggestions"></div>
+                            <input type="hidden" id="general_tags" name="general_tags">
+                        </div>
+                        
+                        <div class="flex items-start space-x-2">
+                            <i class="fas fa-info-circle text-green-400 mt-0.5 text-xs"></i>
+                            <p class="text-xs text-gray-500 leading-relaxed">
+                                Geben Sie Tags ein und drücken Sie <kbd class="px-1 py-0.5 text-xs font-mono bg-gray-100 rounded">Enter</kbd> oder <kbd class="px-1 py-0.5 text-xs font-mono bg-gray-100 rounded">Komma</kbd>. 
+                                Neue Tags werden automatisch erstellt.
+                            </p>
+                        </div>
+                        <div id="general_tags-error" class="field-error-message hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Trennlinie und Buttons am Ende #}
+        <div class="mt-8 pt-5 border-t border-gray-200">
+            <div class="flex justify-between items-center">
+                {# Info über letzte Änderung (nur beim Bearbeiten) #}
+                <div id="lastModified" class="text-sm text-gray-500 hidden">
+                    <i class="fas fa-clock mr-1"></i>
+                    <span id="lastModifiedText"></span>
+                </div>
+                
+                {# Buttons #}
+                <div class="flex space-x-4">
+                    <a href="{% url 'customers:account_list' %}" 
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                        <i class="fas fa-times mr-2"></i>
+                        Abbrechen
+                    </a>
+                    
+                    <button type="submit" 
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                        <i class="fas fa-save mr-2"></i>
+                        <span id="submitButtonText">
+                            {% if is_create %}Firma erstellen{% else %}Änderungen speichern{% endif %}
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+ </div>
+</div>
+
+{# Loading Overlay #}
+<div id="loadingOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+ <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+     <div class="mt-3 text-center">
+         <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+             <i class="fas fa-spinner fa-spin text-blue-600 text-xl"></i>
+         </div>
+         <h3 class="text-lg leading-6 font-medium text-gray-900 mt-4">Verarbeitung läuft...</h3>
+         <div class="mt-2 px-7 py-3">
+             <p class="text-sm text-gray-500" id="loadingText">
+                 Bitte warten Sie, während die Daten gespeichert werden.
+             </p>
+         </div>
+     </div>
+ </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(function() {
+ const isCreate = {{ is_create|yesno:"true,false" }};
+ const accountId = '{{ account_id|default:"" }}';
+ 
+ // VERBESSERTE Tag-System Implementierung
+class CustomTagInput {
+    constructor(containerId, inputId, hiddenId, suggestionsId, type = 'general') {
+        this.container = document.getElementById(containerId);
+        this.input = document.getElementById(inputId);
+        this.hidden = document.getElementById(hiddenId);
+        this.suggestions = document.getElementById(suggestionsId);
+        this.type = type;
+        this.tags = [];
+        this.tagColors = {};
+        this.currentSuggestions = [];
+        this.selectedSuggestion = -1;
+        
+        this.init();
+    }
+     
+    init() {
+        // Event Listeners
+        this.input.addEventListener('keydown', (e) => this.handleKeyDown(e));
+        this.input.addEventListener('input', (e) => this.handleInput(e));
+        this.input.addEventListener('blur', (e) => this.handleBlur(e));
+        this.container.addEventListener('click', () => this.input.focus());
+        
+        // Container Layout sicherstellen
+        this.container.style.display = 'flex';
+        this.container.style.flexWrap = 'wrap';
+        this.container.style.alignItems = 'center';
+        this.container.style.gap = '0.375rem';
+    }
+     
+    handleKeyDown(e) {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            this.addTag(this.input.value.trim());
+        } else if (e.key === 'Backspace' && this.input.value === '' && this.tags.length > 0) {
+            this.removeTag(this.tags.length - 1);
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            this.navigateSuggestions(1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            this.navigateSuggestions(-1);
+        } else if (e.key === 'Tab' && this.selectedSuggestion >= 0) {
+            e.preventDefault();
+            this.selectSuggestion(this.selectedSuggestion);
+        }
+    }
+     
+    handleInput(e) {
+        const value = e.target.value.trim();
+        if (value.length >= 2) {
+            this.fetchSuggestions(value);
+        } else {
+            this.hideSuggestions();
+        }
+    }
+     
+    handleBlur(e) {
+        // Verzögerung für Klick auf Vorschlag
+        setTimeout(() => {
+            this.hideSuggestions();
+            if (this.input.value.trim()) {
+                this.addTag(this.input.value.trim());
+            }
+        }, 200);
+    }
+     
+    addTag(tagName) {
+        if (!tagName || this.tags.includes(tagName)) {
+            this.input.value = '';
+            return;
+        }
+        
+        this.tags.push(tagName);
+        this.renderTags();
+        this.updateHidden();
+        this.input.value = '';
+        this.hideSuggestions();
+    }
+     
+    removeTag(index) {
+        const removedTag = this.tags[index];
+        this.tags.splice(index, 1);
+        delete this.tagColors[removedTag];
+        this.renderTags();
+        this.updateHidden();
+    }
+     
+     renderTags() {
+        // Alle bestehenden Tags entfernen
+        const existingTags = this.container.querySelectorAll('.tag-item');
+        existingTags.forEach(tag => tag.remove());
+        
+        // Tags vor dem Input einfügen
+        this.tags.forEach((tag, index) => {
+            const tagElement = document.createElement('span');
+            tagElement.className = `tag-item ${this.type === 'general' ? 'green' : ''}`;
+            
+            // Individuelle Farbe setzen falls vorhanden
+            if (this.tagColors[tag]) {
+                tagElement.style.backgroundColor = this.tagColors[tag];
+                tagElement.style.borderColor = this.tagColors[tag];
+                tagElement.style.color = this.getContrastColor(this.tagColors[tag]);
+            }
+            
+            tagElement.innerHTML = `
+                <span>${tag}</span>
+                <span class="tag-remove" data-index="${index}">×</span>
+            `;
+            
+            // Event-Listener für Entfernen
+            const removeBtn = tagElement.querySelector('.tag-remove');
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.removeTag(index);
+            });
+            
+            // Tag vor dem Input einfügen
+            this.container.insertBefore(tagElement, this.input);
+        });
+         
+        // Input-Feld Flexibilität sicherstellen
+        this.input.style.flex = '1';
+        this.input.style.minWidth = '150px';
+    }
+    
+    updateHidden() {
+        this.hidden.value = this.tags.join(', ');
+    }
+    
+    fetchSuggestions(query) {
+        const endpoint = this.type === 'industry' ? '/core/industry-autocomplete/' : '/core/tag-autocomplete/';
+        
+        fetch(`${endpoint}?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                this.showSuggestions(data.results || []);
+            })
+            .catch(() => {
+                this.hideSuggestions();
+            });
+    }
+    
+    showSuggestions(suggestions) {
+        this.currentSuggestions = suggestions.filter(s => !this.tags.includes(s.text || s));
+        this.selectedSuggestion = -1;
+        
+        if (this.currentSuggestions.length === 0) {
+            this.hideSuggestions();
+            return;
+        }
+        
+        this.suggestions.innerHTML = '';
+        this.currentSuggestions.forEach((suggestion, index) => {
+            const div = document.createElement('div');
+            div.className = 'tag-suggestion';
+            div.textContent = suggestion.text || suggestion;
+            div.addEventListener('click', () => this.selectSuggestion(index));
+            this.suggestions.appendChild(div);
+        });
+        
+        this.suggestions.style.display = 'block';
+    }
+    
+    hideSuggestions() {
+        this.suggestions.style.display = 'none';
+        this.selectedSuggestion = -1;
+    }
+    
+    navigateSuggestions(direction) {
+        if (this.currentSuggestions.length === 0) return;
+        
+        this.selectedSuggestion += direction;
+        if (this.selectedSuggestion < 0) this.selectedSuggestion = this.currentSuggestions.length - 1;
+        if (this.selectedSuggestion >= this.currentSuggestions.length) this.selectedSuggestion = 0;
+        
+        // Highlight aktualisieren
+        const suggestions = this.suggestions.querySelectorAll('.tag-suggestion');
+        suggestions.forEach((s, i) => {
+            s.classList.toggle('active', i === this.selectedSuggestion);
+        });
+    }
+    
+    selectSuggestion(index) {
+        if (index >= 0 && index < this.currentSuggestions.length) {
+            const suggestion = this.currentSuggestions[index];
+            this.addTag(suggestion.text || suggestion);
+        }
+    }
+    
+    setTags(tags) {
+        this.tags = [];
+        this.tagColors = {};
+        
+        tags.forEach(tag => {
+           if (typeof tag === 'object') {
+               this.tags.push(tag.name);
+               if (tag.color) {
+                   this.tagColors[tag.name] = tag.color;
+               }
+           } else {
+               this.tags.push(tag);
+           }
+       });
+       
+       this.renderTags();
+       this.updateHidden();
+   }
+   
+   getContrastColor(hexcolor) {
+       if (!hexcolor || hexcolor === '') return '#222';
+       hexcolor = hexcolor.replace('#','');
+       if (hexcolor.length !== 6) return '#222';
+       
+       const r = parseInt(hexcolor.substr(0,2),16);
+       const g = parseInt(hexcolor.substr(2,2),16);
+       const b = parseInt(hexcolor.substr(4,2),16);
+       const yiq = ((r*299)+(g*587)+(b*114))/1000;
+       return (yiq >= 128) ? '#222' : '#fff';
+   }
+}
+
+// Tag-Inputs initialisieren
+const industryTags = new CustomTagInput(
+   'industry_tags_container', 
+   'industry_tags_input', 
+   'industry_tags', 
+   'industry_tags_suggestions', 
+   'industry'
+);
+
+const generalTags = new CustomTagInput(
+   'general_tags_container', 
+   'general_tags_input', 
+   'general_tags', 
+   'general_tags_suggestions', 
+   'general'
+);
+
+// CSRF Token für AJAX Requests
+function getCookie(name) {
+   let cookieValue = null;
+   if (document.cookie && document.cookie !== '') {
+       const cookies = document.cookie.split(';');
+       for (let i = 0; i < cookies.length; i++) {
+           const cookie = cookies[i].trim();
+           if (cookie.substring(0, name.length + 1) === (name + '=')) {
+               cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+               break;
+           }
+       }
+   }
+   return cookieValue;
+}
+
+// Fehler-Handling für Formularfelder
+function showFieldError(fieldName, message) {
+   const field = $(`#${fieldName}`);
+   const errorDiv = $(`#${fieldName}-error`);
+   
+   field.addClass('form-field-error');
+   errorDiv.text(message).removeClass('hidden');
+}
+
+function clearFieldError(fieldName) {
+   const field = $(`#${fieldName}`);
+   const errorDiv = $(`#${fieldName}-error`);
+   
+   field.removeClass('form-field-error');
+   errorDiv.addClass('hidden');
+}
+
+function clearAllErrors() {
+   $('.form-field-error').removeClass('form-field-error');
+   $('.field-error-message').addClass('hidden');
+   $('#formErrors').addClass('hidden');
+}
+
+// Loading Overlay
+function showLoading(text = 'Bitte warten Sie, während die Daten gespeichert werden.') {
+   $('#loadingText').text(text);
+   $('#loadingOverlay').removeClass('hidden');
+}
+
+function hideLoading() {
+   $('#loadingOverlay').addClass('hidden');
+}
+
+// Success Message
+function showSuccess(message) {
+   $('#successText').text(message);
+   $('#successMessage').removeClass('hidden');
+   setTimeout(() => {
+       $('#successMessage').addClass('hidden');
+   }, 5000);
+}
+
+// Formular-Validierung
+function validateForm() {
+   let isValid = true;
+   clearAllErrors();
+
+   // Name ist Pflichtfeld
+   const name = $('#name').val().trim();
+   if (!name) {
+       showFieldError('name', 'Firmenname ist erforderlich.');
+       isValid = false;
+   }
+
+   // E-Mail-Format prüfen (falls angegeben)
+   const email = $('#email').val().trim();
+   if (email && !isValidEmail(email)) {
+       showFieldError('email', 'Bitte geben Sie eine gültige E-Mail-Adresse ein.');
+       isValid = false;
+   }
+
+   // Website-Format prüfen (falls angegeben)
+   const website = $('#website').val().trim();
+   if (website && !isValidUrl(website)) {
+       showFieldError('website', 'Bitte geben Sie eine gültige URL ein (z.B. https://beispiel.de).');
+       isValid = false;
+   }
+
+   return isValid;
+}
+
+function isValidEmail(email) {
+   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+   return emailRegex.test(email);
+}
+
+function isValidUrl(url) {
+   try {
+       new URL(url);
+       return true;
+   } catch {
+       return false;
+   }
+}
+
+// Daten beim Bearbeiten laden
+if (!isCreate && accountId) {
+   showLoading('Lade Account-Daten...');
+   loadAccountData();
+}
+
+async function loadAccountData() {
+   try {
+       const response = await fetch(`/customers/api/accounts/${accountId}/data/`);
+       if (response.ok) {
+           const data = await response.json();
+           console.log('Loaded data:', data);
+           
+           if (data.status === 'success') {
+               // Formularfelder befüllen
+               $('#name').val(data.data.name || '');
+               $('#website').val(data.data.website || '');
+               $('#phone_number').val(data.data.phone_number || '');
+               $('#email').val(data.data.email || '');
+               $('#street').val(data.data.street || '');
+               $('#postal_code').val(data.data.postal_code || '');
+               $('#city').val(data.data.city || '');
+               $('#country').val(data.data.country || 'Deutschland');
+               $('#assigned_group').val(data.data.assigned_group || '');
+               
+               console.log('Industry tags:', data.data.industry_tags);
+               console.log('General tags:', data.data.general_tags);
+
+               // Tags laden mit Farben
+               if (Array.isArray(data.data.industry_tags)) {
+                   industryTags.setTags(data.data.industry_tags);
+               }
+
+               if (Array.isArray(data.data.general_tags)) {
+                   generalTags.setTags(data.data.general_tags);
+               }
+
+               // Letzte Änderung anzeigen (falls verfügbar)
+               if (data.data.updated_at) {
+                   const updatedDate = new Date(data.data.updated_at);
+                   $('#lastModifiedText').text(`Zuletzt geändert: ${updatedDate.toLocaleString('de-DE')}`);
+                   $('#lastModified').removeClass('hidden');
+               }
+
+               showSuccess('Account-Daten erfolgreich geladen.');
+           } else {
+               $('#errorMessage').text(data.message || 'Fehler beim Laden der Account-Daten.');
+               $('#formErrors').removeClass('hidden');
+           }
+       } else {
+           $('#errorMessage').text('Fehler beim Laden der Account-Daten.');
+           $('#formErrors').removeClass('hidden');
+       }
+   } catch (error) {
+       console.error('Fehler beim Laden der Account-Daten:', error);
+       $('#errorMessage').text('Ein unerwarteter Fehler ist beim Laden aufgetreten.');
+       $('#formErrors').removeClass('hidden');
+   } finally {
+       hideLoading();
+   }
+}
+
+// Formular absenden
+$('#accountForm').on('submit', async function(e) {
+   e.preventDefault();
+   
+   // Validierung
+   if (!validateForm()) {
+       return;
+   }
+   
+   // Loading-Zustand
+   const submitBtn = $(this).find('button[type="submit"]');
+   const originalText = submitBtn.find('#submitButtonText').html();
+   submitBtn.find('#submitButtonText').html('Speichere...');
+   submitBtn.prop('disabled', true);
+   
+   showLoading(isCreate ? 'Erstelle neue Firma...' : 'Speichere Änderungen...');
+   
+   try {
+       // Formulardaten sammeln
+       const formData = {
+           name: $('#name').val().trim(),
+           website: $('#website').val().trim(),
+           phone_number: $('#phone_number').val().trim(),
+           email: $('#email').val().trim(),
+           street: $('#street').val().trim(),
+           postal_code: $('#postal_code').val().trim(),
+           city: $('#city').val().trim(),
+           country: $('#country').val().trim() || 'Deutschland',
+           assigned_group: $('#assigned_group').val() || null,
+           industry_tags: $('#industry_tags').val(),
+           general_tags: $('#general_tags').val()
+       };
+
+       console.log('Sending data:', formData);
+       
+       // API-Endpunkt bestimmen
+       const url = isCreate 
+           ? '{% url "customers:api_account_create" %}'
+           : `/customers/api/accounts/${accountId}/update/`;
+       
+       const response = await fetch(url, {
+           method: 'POST',
+           headers: {
+               'Content-Type': 'application/json',
+               'X-CSRFToken': getCookie('csrftoken')
+           },
+           body: JSON.stringify(formData)
+       });
+       
+       const result = await response.json();
+       console.log('Server response:', result);
+       
+       if (result.status === 'success') {
+           // Erfolg - kurz Success-Message anzeigen, dann weiterleiten
+           hideLoading();
+           showSuccess(isCreate ? 'Firma erfolgreich erstellt!' : 'Änderungen erfolgreich gespeichert!');
+           
+           setTimeout(() => {
+               window.location.href = result.redirect_url;
+           }, 1500);
+       } else {
+           // Fehler anzeigen
+           hideLoading();
+           
+           // Spezifische Felderfehler behandeln
+           if (result.errors && typeof result.errors === 'object') {
+               Object.keys(result.errors).forEach(field => {
+                   showFieldError(field, result.errors[field]);
+               });
+           } else {
+               $('#errorMessage').text(result.message || 'Ein Fehler ist aufgetreten.');
+               $('#formErrors').removeClass('hidden');
+           }
+       }
+   } catch (error) {
+       console.error('Fehler beim Speichern:', error);
+       hideLoading();
+       $('#errorMessage').text('Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+       $('#formErrors').removeClass('hidden');
+   } finally {
+       // Loading-Zustand zurücksetzen
+       submitBtn.find('#submitButtonText').html(originalText);
+       submitBtn.prop('disabled', false);
+   }
+});
+
+// Keyboard Shortcuts
+$(document).on('keydown', function(e) {
+   // Ctrl+S zum Speichern
+   if (e.ctrlKey && e.key === 's') {
+       e.preventDefault();
+       $('#accountForm').submit();
+   }
+   
+   // Escape zum Abbrechen
+   if (e.key === 'Escape') {
+       if (confirm('Möchten Sie wirklich abbrechen? Ungespeicherte Änderungen gehen verloren.')) {
+           window.location.href = '{% url "customers:account_list" %}';
+       }
+   }
+});
+
+// Warnung bei ungespeicherten Änderungen
+let formChanged = false;
+$('#accountForm input, #accountForm select, #accountForm textarea').on('input change', function() {
+   formChanged = true;
+});
+
+$(window).on('beforeunload', function(e) {
+   if (formChanged) {
+       const message = 'Sie haben ungespeicherte Änderungen. Möchten Sie die Seite wirklich verlassen?';
+       e.returnValue = message;
+       return message;
+   }
+});
+
+// Form submitted - remove beforeunload warning
+$('#accountForm').on('submit', function() {
+   formChanged = false;
+});
+
+// Focus auf erstes Feld setzen
+setTimeout(() => {
+   $('#name').focus();
+}, 100);
+
+console.log('Account form initialized', {
+   isCreate: isCreate,
+   accountId: accountId
+});
+});
+</script>
 {% endblock %}
 

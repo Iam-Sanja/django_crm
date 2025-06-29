@@ -58,10 +58,10 @@
                             <p class="font-medium flex items-center">
                                 <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 mr-2">
                                     <span class="text-xs font-medium leading-none text-gray-500">
-                                        {{ activity.assigned_to.username|first|upper }}
+                                        {{ activity.assigned_to.email|first|upper }}
                                     </span>
                                 </span>
-                                {{ activity.assigned_to.username|default:"-" }}
+                                {{ activity.assigned_to.email|default:"-" }}
                             </p>
                         </div>
                         <div>
@@ -141,7 +141,7 @@
                     <div class="space-y-4">
                         <div>
                             <p class="text-sm text-gray-500 mb-1"><i class="fas fa-plus-circle fa-fw mr-1"></i>Erstellt am</p>
-                            <p class="font-medium">{{ activity.created_at|date:"d.m.Y H:i" }} von {{ activity.owner.username|default:"System" }}</p>
+                            <p class="font-medium">{{ activity.created_at|date:"d.m.Y H:i" }} von {{ activity.owner.email|default:"System" }}</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-500 mb-1"><i class="fas fa-edit fa-fw mr-1"></i>Aktualisiert am</p>

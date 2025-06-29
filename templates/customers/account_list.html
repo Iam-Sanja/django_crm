@@ -8,7 +8,7 @@
         <h1 class="text-2xl font-semibold text-gray-800">
             <i class="fas fa-building mr-3 text-blue-600"></i>Firmenübersicht
         </h1>
-        <a href="{% url 'customers:api_account_create' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+        <a href="{% url 'customers:account_create' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
             <i class="fas fa-plus mr-2"></i> Neue Firma
         </a>
     </div>
@@ -39,7 +39,17 @@
                                     </a>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                    {{ account.industry|default:"-" }}
+                                    {% if account.industry.all %}
+                                        <div class="flex flex-wrap gap-1">
+                                            {% for tag in account.industry.all %}
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" style="background-color: {{ tag.color }}20; color: {{ tag.color }};">
+                                                    {{ tag.name }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        -
+                                    {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                     {% if account.phone_number %}
@@ -75,7 +85,7 @@
                                         <div class="flex-shrink-0 h-8 w-8">
                                             <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-200">
                                                 <span class="text-sm font-medium leading-none text-gray-500">
-                                                    {{ account.owner.username|first|upper }}
+                                                    {{ account.owner.email|first|upper }}
                                                 </span>
                                             </span>
                                         </div>
@@ -89,7 +99,7 @@
                                         <a href="{% url 'customers:account_detail' pk=account.pk %}" class="text-gray-500 hover:text-blue-600 transition duration-150" title="Details">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{% url 'customers:api_account_update' pk=account.pk %}" class="text-gray-500 hover:text-yellow-600 transition duration-150" title="Bearbeiten">
+                                        <a href="{% url 'customers:account_update' pk=account.pk %}" class="text-gray-500 hover:text-yellow-600 transition duration-150" title="Bearbeiten">
                                             <i class="fas fa-pencil-alt"></i>
                                         </a>
                                         <a href="{% url 'customers:account_delete' pk=account.pk %}" class="text-gray-500 hover:text-red-600 transition duration-150" title="Löschen">
@@ -108,7 +118,7 @@
                     <i class="fas fa-building text-gray-300 text-5xl mb-4"></i>
                     <h3 class="text-lg font-medium text-gray-900 mb-1">Keine Firmen vorhanden</h3>
                     <p class="text-gray-500 mb-6">Erstellen Sie Ihre erste Firma, um Kundenbeziehungen zu verwalten.</p>
-                    <a href="{% url 'customers:account_add' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <a href="{% url 'customers:account_create' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <i class="fas fa-plus mr-2"></i> Neue Firma erstellen
                     </a>
                 </div>

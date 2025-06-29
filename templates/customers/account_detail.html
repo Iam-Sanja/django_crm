@@ -9,12 +9,14 @@
             <i class="fas fa-building mr-3 text-blue-600"></i>
             {{ account.name }}
         </h1>
-        <div class="flex space-x-2">
-            <a href="{% url 'customers:api_account_update' pk=account.pk %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
-                <i class="fas fa-pencil-alt mr-1.5"></i> Bearbeiten
+        <div class="flex space-x-4">
+            <a href="{% url 'customers:account_update' pk=account.pk %}" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <i class="fas fa-pencil-alt mr-2"></i> Bearbeiten
             </a>
-            <a href="{% url 'customers:account_delete' pk=account.pk %}" class="bg-red-500 hover:bg-red-600 text-white font-medium py-1.5 px-3 text-sm rounded transition duration-150 ease-in-out flex items-center shadow-sm">
-                <i class="fas fa-trash-alt mr-1.5"></i> Löschen
+            <a href="{% url 'customers:account_delete' pk=account.pk %}"
+               class="inline-flex items-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                <i class="fas fa-trash-alt mr-2"></i> Löschen
             </a>
         </div>
     </div>
@@ -36,7 +38,19 @@
                         </div>
                         <div>
                             <p class="text-sm text-gray-500 mb-1">Branche</p>
-                            <p class="font-medium">{{ account.industry|default:"-" }}</p>
+                            <p class="font-medium">
+                                {% if account.industry.all %}
+                                    <div class="flex flex-wrap gap-2">
+                                        {% for tag in account.industry.all %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: {{ tag.color }}20; color: {{ tag.color }};">
+                                                <i class="fas fa-industry mr-1"></i>{{ tag.name }}
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-500 mb-1">Telefon</p>
@@ -80,7 +94,7 @@
                             <p class="font-medium flex items-center">
                                 <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-200 mr-2">
                                     <span class="text-sm font-medium leading-none text-gray-500">
-                                        {{ account.owner.username|first|upper }}
+                                        {{ account.owner.email|first|upper }}
                                     </span>
                                 </span>
                                 {{ account.owner|default:"-" }}
@@ -91,9 +105,13 @@
                     <div class="mt-6">
                         <p class="text-sm text-gray-500 mb-1">Adresse</p>
                         <p class="font-medium">
-                            {% if account.address %}
+                            {% if account.get_full_address %}
                                 <address class="not-italic">
-                                    {{ account.address|linebreaks }}
+                                    {% if account.street %}{{ account.street }}<br>{% endif %}
+                                    {% if account.postal_code or account.city %}
+                                        {% if account.postal_code %}{{ account.postal_code }}{% endif %}{% if account.postal_code and account.city %} {% endif %}{% if account.city %}{{ account.city }}{% endif %}{% if account.country and account.country != "Deutschland" %}<br>{% endif %}
+                                    {% endif %}
+                                    {% if account.country and account.country != "Deutschland" %}{{ account.country }}{% endif %}
                                 </address>
                             {% else %}
                                 <span class="text-gray-400">-</span>
@@ -107,6 +125,19 @@
                             <p class="text-gray-700">{{ account.description|linebreaks }}</p>
                         </div>
                     {% endif %}
+
+                    {% if account.tags.all %}
+                        <div class="mt-6">
+                            <p class="text-sm text-gray-500 mb-2">Tags</p>
+                            <div class="flex flex-wrap gap-2">
+                                {% for tag in account.tags.all %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: {{ tag.color }}20; color: {{ tag.color }};">
+                                        {{ tag.name }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
             <!--TODO api_contact_create gives 405 Error, same by contact - reason views not allowed-->
@@ -114,8 +145,9 @@
             <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100 mb-6">
                 <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                     <h3 class="text-lg font-medium text-gray-800">Kontakte</h3>
-                    <a href="{% url 'customers:api_contact_create' %}?account={{ account.pk }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                        <i class="fas fa-plus mr-1"></i> Kontakt hinzufügen
+                    <a href="{% url 'customers:contact_create' %}?account={{ account.pk }}" 
+                       class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        <i class="fas fa-plus-circle mr-1"></i> Neuen Kontakt hinzufügen
                     </a>
                 </div>
                 <div class="p-6">
@@ -135,7 +167,7 @@
                                                     {{ contact.first_name }} {{ contact.last_name }}
                                                 </a>
                                                 <div class="flex space-x-2">
-                                                    <a href="{% url 'customers:contact_edit' pk=contact.pk %}" class="text-gray-500 hover:text-yellow-600" title="Bearbeiten">
+                                                    <a href="{% url 'customers:contact_update' pk=contact.pk %}" class="text-gray-500 hover:text-yellow-600" title="Bearbeiten">
                                                         <i class="fas fa-pencil-alt"></i>
                                                     </a>
                                                 </div>
@@ -330,18 +362,6 @@
                             <p class="text-sm text-gray-500 mb-1">Aktualisiert am</p>
                             <p class="font-medium">{{ account.updated_at|date:"d.m.Y H:i" }}</p>
                         </div>
-                        {% if account.tags.all %}
-                            <div>
-                                <p class="text-sm text-gray-500 mb-1">Tags</p>
-                                <div class="flex flex-wrap gap-2">
-                                    {% for tag in account.tags.all %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            {{ tag }}
-                                        </span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>

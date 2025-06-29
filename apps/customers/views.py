@@ -48,23 +48,18 @@ class AccountCreateView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['tags'] = Tag.objects.all()
+        context['is_create'] = True
+        context['accounts'] = Account.objects.filter(owner=self.request.user)
         return context
 
-class AccountUpdateView(LoginRequiredMixin, DetailView):
-    model = Account
+class AccountUpdateView(LoginRequiredMixin, TemplateView):
     template_name = 'customers/account_form.html'
-    context_object_name = 'object'
-
-    def get_object(self, queryset=None):
-        obj = super().get_object(queryset=queryset)
-        if obj.owner != self.request.user:
-            raise Http404("Account not found or permission denied")
-        return obj
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['tags'] = Tag.objects.all()
+        context['is_create'] = False
+        context['account_id'] = self.kwargs.get('pk')
+        context['accounts'] = Account.objects.filter(owner=self.request.user)
         return context
 
 class AccountDeleteView(LoginRequiredMixin, DeleteView):
@@ -114,37 +109,17 @@ class ContactCreateView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['tags'] = Tag.objects.all()
+        context['is_create'] = True
         context['accounts'] = Account.objects.filter(owner=self.request.user)
-        return super().form_valid(form)
+        return context
 
-    # Optional: Wenn von Account-Seite erstellt, Account vorbelegen
-    def get_initial(self):
-        initial = super().get_initial()
-        account_id = self.request.GET.get('account')
-        if account_id:
-            try:
-                # Sicherstellen, dass der Account dem User gehört
-                account = get_object_or_404(Account, pk=account_id, owner=self.request.user)
-                initial['account'] = account
-            except Http404:
-                pass
-        return initial
-
-class ContactUpdateView(LoginRequiredMixin, DetailView):
-    model = Contact
+class ContactUpdateView(LoginRequiredMixin, TemplateView):
     template_name = 'customers/contact_form.html'
-    context_object_name = 'object'
-
-    def get_object(self, queryset=None):
-        obj = super().get_object(queryset=queryset)
-        if obj.owner != self.request.user:
-            raise Http404("Contact not found or permission denied")
-        return obj
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['tags'] = Tag.objects.all()
+        context['is_create'] = False
+        context['contact_id'] = self.kwargs.get('pk')
         context['accounts'] = Account.objects.filter(owner=self.request.user)
         return context
 

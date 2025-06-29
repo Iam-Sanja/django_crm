@@ -14,15 +14,6 @@
     {# Font Awesome via CDN (optional) - Wähle die gewünschte Version #}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    {# Eigener CSS-Block für kleine Anpassungen oder falls kein Build-Prozess genutzt wird #}
-    <style>
-        /* Kleine Anpassungen, falls nötig */
-        [x-cloak] { display: none !important; } /* Verhindert Flackern von Alpine.js Elementen beim Laden */
-        .kanban-column-body { min-height: 150px; } /* Mindesthöhe für leere Spalten */
-        .kanban-card { cursor: grab; } /* Mauszeiger für verschiebbare Karten */
-        .kanban-card:active { cursor: grabbing; } /* Mauszeiger beim Ziehen */
-        .drag-over { border-style: dashed; background-color: #e0e7ff; } /* Visuelles Feedback beim Drüberziehen */
-    </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans">
 
@@ -86,7 +77,8 @@
         </footer>
 
     </div> {# Ende container #}
-
+y
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     {# Block für spezifisches Javascript am Ende der Seite #}
     {% block extra_js %}{% endblock %}
 

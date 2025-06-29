@@ -1,8 +1,13 @@
 # apps/activities/models.py
+import uuid
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+def generate_uuid():
+    """Generate UUID4 for primary keys"""
+    return str(uuid.uuid4())
 
 class Activity(models.Model):
     """Logs interactions like calls, meetings, tasks."""
@@ -23,6 +28,7 @@ class Activity(models.Model):
         CANCELED = 'CANCELED', _('Canceled')
         # Füge hier weitere Status hinzu (insb. für Tasks)
 
+    id = models.UUIDField(primary_key=True, default=generate_uuid, editable=False)
     type = models.CharField(_("Type"), max_length=20, choices=ActivityType.choices)
     subject = models.CharField(_("Subject"), max_length=255)
     notes = models.TextField(_("Notes"), blank=True, null=True)

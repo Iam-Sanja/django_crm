@@ -4,10 +4,13 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count, Q
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 from apps.leads.models import Lead
 from apps.activities.models import Activity
@@ -81,7 +84,7 @@ def dashboard(request):
     accounts_count = Account.objects.filter(owner=user).count()
     
     context = {
-        'welcome_message': f'Willkommen zurück, {user.get_full_name() or user.username}!',
+        'welcome_message': f'Willkommen zurück, {user.get_full_name() or user.email}!',
         'open_leads_count': open_leads_count,
         'new_leads_count': new_leads_count,
         'contacted_leads_count': contacted_leads_count,
@@ -120,4 +123,71 @@ class TagDeleteView(LoginRequiredMixin, DeleteView):
     model = Tag
     template_name = 'core/tag_confirm_delete.html'
     success_url = reverse_lazy('core:tag_list')
+
+@require_http_methods(["GET"])
+def industry_autocomplete(request):
+    q = request.GET.get('q', '')
+    tags = Tag.objects.filter(type='industry')
+    if q:
+        tags = tags.filter(name__icontains=q)
+    tags = tags[:10]
+    return JsonResponse({
+        'results': [
+            {'id': str(tag.id), 'text': tag.name, 'color': tag.color or '#3b82f6'}
+            for tag in tags
+        ]
+    })
+
+@require_http_methods(["GET"])
+def tag_autocomplete(request):
+    q = request.GET.get('q', '')
+    tags = Tag.objects.filter(type='general')
+    if q:
+        tags = tags.filter(name__icontains=q)
+    tags = tags[:10]
+    return JsonResponse({
+        'results': [
+            {'id': str(tag.id), 'text': tag.name, 'color': tag.color or '#10b981'}
+            for tag in tags
+        ]
+    })
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_tag(request):
+    try:
+        data = json.loads(request.body)
+        tag_name = data.get('name', '').strip()
+        tag_type = data.get('type', 'general')
+        
+        if not tag_name:
+            return JsonResponse({'error': 'Tag-Name ist erforderlich'}, status=400)
+        
+        # Prüfe ob Tag bereits existiert
+        existing_tag = Tag.objects.filter(name=tag_name, type=tag_type).first()
+        if existing_tag:
+            return JsonResponse({
+                'id': str(existing_tag.id),
+                'name': existing_tag.name,
+                'type': existing_tag.type
+            })
+        
+        # Erstelle neuen Tag
+        new_tag = Tag.objects.create(
+            name=tag_name,
+            type=tag_type,
+            color=data.get('color', '#3b82f6')  # Default blau
+        )
+        
+        return JsonResponse({
+            'id': str(new_tag.id),
+            'name': new_tag.name,
+            'type': new_tag.type,
+            'color': new_tag.color
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Ungültiges JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 

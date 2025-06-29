@@ -1,14 +1,21 @@
 # apps/core/models.py
+import uuid
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
+def generate_uuid():
+    """Generate UUID4 for primary keys"""
+    return str(uuid.uuid4())
+
 class Tag(models.Model):
     """Model for tags/keywords."""
+    id = models.UUIDField(primary_key=True, default=generate_uuid, editable=False)
     name = models.CharField(_("Tag Name"), max_length=100, unique=True)
     color = models.CharField(_("Color"), max_length=7, blank=True, null=True, help_text=_("Optional Hex Color Code, e.g., #FFFFFF"))
+    type = models.CharField(_("Type"), max_length=20, choices=[('industry', 'Branche'), ('general', 'Allgemein')], default='general')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -21,6 +28,7 @@ class Tag(models.Model):
 
 class Note(models.Model):
     """Model for generic notes related to other objects."""
+    id = models.UUIDField(primary_key=True, default=generate_uuid, editable=False)
     content = models.TextField(_("Content"))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -28,7 +36,7 @@ class Note(models.Model):
 
     # Generic Relation
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
+    object_id = models.UUIDField()  # Changed from PositiveIntegerField to UUIDField
     content_object = GenericForeignKey('content_type', 'object_id')
 
     class Meta:
@@ -41,6 +49,7 @@ class Note(models.Model):
 
 class Attachment(models.Model):
     """Model for file attachments related to other objects."""
+    id = models.UUIDField(primary_key=True, default=generate_uuid, editable=False)
     file = models.FileField(_("File"), upload_to='attachments/%Y/%m/%d/') # Struktur für Upload-Pfad
     file_name = models.CharField(_("File Name"), max_length=255, blank=True) # Wird oft automatisch gesetzt
     mime_type = models.CharField(_("MIME Type"), max_length=100, blank=True) # Wird oft automatisch gesetzt
@@ -50,7 +59,7 @@ class Attachment(models.Model):
 
     # Generic Relation
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
+    object_id = models.UUIDField()  # Changed from PositiveIntegerField to UUIDField
     content_object = GenericForeignKey('content_type', 'object_id')
 
     class Meta:
